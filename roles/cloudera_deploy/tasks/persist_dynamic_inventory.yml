@@ -1,0 +1,62 @@
+---
+
+# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Generate a unique name
+  ansible.builtin.set_fact:
+    __tmp_dynamic_inventory_artefact: "{{ [inventory_dir, 99999999 | random | to_uuid] | path_join }}"
+
+- name: Copy Host Inventory Template to Temporary Static Inventory Artefact
+  ansible.builtin.copy:
+    src: "{{ init__dynamic_inventory_template }}"
+    dest: "{{ __tmp_dynamic_inventory_artefact }}"
+
+- name: Update Static Inventory Artefact with Host Entries from Cloud Infrastructure Run
+  loop: "{{ __dynamic_inventory_host_list | zip( infra__dynamic_inventory_host_entries ) }}"
+  loop_control:
+    loop_var: __infra_inventory_compute_item
+  ansible.builtin.replace:
+    name: "{{ __tmp_dynamic_inventory_artefact }}"
+    regexp: '(\s+){{ __infra_inventory_compute_item.0 }}(\s+)'
+    replace: '\1{{ __infra_inventory_compute_item.1 }}\2'
+
+- name: Stat the Temporary Artefact
+  ansible.builtin.stat:
+    path: "{{ __tmp_dynamic_inventory_artefact }}"
+  register: __tmp_inventory_static
+
+- name: Check for an existing Dynamic Inventory Artefact file
+  ansible.builtin.stat:
+    path: "{{ init__dynamic_inventory_artefact }}"
+  register: __inventory_static
+
+- name: Create a backup if the files are different
+  when:
+    - __inventory_static.stat.exists
+    - __tmp_inventory_static.stat.checksum != __inventory_static.stat.checksum
+  ansible.builtin.copy:
+    src: "{{ __inventory_static.stat.path }}"
+    dest: "{{ [init__dynamic_inventory_artefact | splitext | first, ansible_date_time.epoch] | join('.') }}"
+
+- name: Copy Temporary Dynamic Inventory Artefact to Inventory Artefact
+  ansible.builtin.copy:
+    src: "{{ __tmp_inventory_static.stat.path }}"
+    dest: "{{ init__dynamic_inventory_artefact }}"
+    force: yes
+
+- name: Remove Temporary Artefact file
+  ansible.builtin.file:
+    path: "{{ __tmp_inventory_static.stat.path }}"
+    state: absent

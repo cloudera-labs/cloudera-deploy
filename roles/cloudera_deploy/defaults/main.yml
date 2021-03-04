@@ -1,0 +1,51 @@
+---
+
+# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Default Paths
+default_local_temp_dir: '/tmp'
+default_sshkey_path: '~/.ssh'
+default_config_path: '~/.config/cloudera-deploy'
+
+# Default names
+default_name_prefix: cldr
+default_ssh_key_suffix: _ssh_rsa
+default_download_mirror_prefix: cache
+
+# Default Basic Cluster Config
+default_cluster_definition_file: "defaults/basic_cluster.yml"
+
+# Default Artefact Filenames
+default_profile_path: "{{ [default_config_path, 'profiles'] | path_join }}"
+default_profile_file: "default"
+default_definition_file: "definition.yml"
+default_cluster_file: "cluster.yml"
+default_inventory_template: "inventory_template.ini"
+default_static_inventory: "inventory_static.ini"
+download_mirror_file: "{{ [default_config_path, 'download_mirror.ini'] | path_join }}"
+
+include_inventory_file: ''
+
+# Default behavior
+use_default_cluster_definition: no
+
+# Default parcel cache
+default_enable_download_mirror: no
+default_parcel_distro: el7.parcel
+default_download_link_expiry: 3600
+
+# Default Deployment Controls
+default_infra_type: aws
+default_infra_region: us-east-1

@@ -1,0 +1,117 @@
+---
+
+# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Read in cluster definition without jinja parsing
+- name: Fetch repositories from cluster definition
+  ansible.builtin.set_fact:
+    init__preparse_repo_listing: "{{ lookup('file', init__cluster_definition_file ) | from_yaml | json_query('clusters[*].repositories') | flatten }}"
+
+- name: Check that a Cloudera License is presented if mirroring from files behind Cloudera Subscription
+  when: init__preparse_repo_listing | select('search', 'archive.cloudera.com/p') | length > 0
+  ansible.builtin.assert:
+    that:
+      - globals.cloudera_license_file is defined
+      - globals.cloudera_license_file | length > 0
+    fail_msg: "You must Supply a Cloudera License file to download and mirror files from archive.cloudera.com"
+
+- name: Separate direct Repos from tarballs and set Initial Facts
+  ansible.builtin.set_fact:
+    __init_parcel_repos: "{{ init__preparse_repo_listing | reject('search', 'tar.gz') | default([]) }}"
+    __init_tarball_links: "{{ init__preparse_repo_listing | select('search', 'tar.gz') | default([]) }}"
+    cloudera_manager_license_file: "{{ globals.cloudera_license_file | default(omit) }}"
+
+# This sets 'manifests' on the calling host, and provides the repo login details
+- name: Get Parcel Manifests
+  ansible.builtin.include_role:
+    name: cloudera.cluster.deployment.repometa
+    public: yes
+  vars:
+    repositories: "{{ __init_parcel_repos }}"
+
+- name: Extract Parcel URLs from Manifests
+  ansible.builtin.set_fact:
+    __parcel_urls: "{{ manifests.results | cloudera.cluster.extract_parcel_urls }}"
+
+- name: Filter Parcels by distro
+  ansible.builtin.set_fact:
+    __filtered_parcel_urls: "{{ __parcel_urls | select('search', parcel_distro | default(default_parcel_distro)) | list }}"
+
+- name: Prepare target Download Mirror listing with parcels and attendant files
+  when: __filtered_parcel_urls | length > 0
+  loop: "{{ __filtered_parcel_urls }}"
+  loop_control:
+    loop_var: __filtered_parcel_item
+  ansible.builtin.set_fact:
+    init__file_mirror_targets: "{{ init__file_mirror_targets | default(__init_tarball_links) + [__filtered_parcel_item, __filtered_parcel_item + '.sha1', __filtered_parcel_item.replace(__filtered_parcel_item | basename, 'manifest.json') ] }}"
+
+# This sets 'cloudera_manager_repo_url' on the calling host
+- name: Determine Cloudera Manager Repo
+  ansible.builtin.include_role:
+    role: cloudera.cluster.cloudera_manager.repo
+  vars:
+    install_repo_on_host: no
+    clusters: []
+
+- name: Add Cloudera Manager Repo to File Mirror list
+  ansible.builtin.set_fact:
+    init__file_mirror_targets: "{{ init__file_mirror_targets + [cloudera_manager_repo_url | regex_replace('^(.+\\/(\\d\\.\\d\\.\\d)\\/)(\\w+)\\/.+$', '\\1' + 'repo-as-tarball/cm' + '\\2' + '-' + '\\3' + '.tar.gz')] }}"
+
+- name: Include CSDs if set
+  when:
+    - cloudera_manager_csds is defined
+    - cloudera_manager_csds | length > 0
+  ansible.builtin.set_fact:
+    init__file_mirror_targets: "{{ init__file_mirror_targets + cloudera_manager_csds }}"
+
+- name: Resolve Download Mirror for AWS
+  when: globals.infra_type == 'aws'
+  block:
+    - name: Get AWS Account Info
+      amazon.aws.aws_caller_info:
+      register: __aws_caller_info
+
+    - name: Prepare Localised Download Mirror utility bucket name
+      ansible.builtin.set_fact:
+        init__download_mirror_bucket_name: "{{ utility_bucket_name | default([ download_mirror_prefix | default(default_download_mirror_prefix), __aws_caller_info.account, globals.region ] | join('-') ) }}"
+
+    - name: List current target cache contents if any exist
+      register: __download_mirror_lookup_initial
+      failed_when:
+        - __download_mirror_lookup_initial.s3_keys is not defined
+        - "'cannot be found' not in __download_mirror_lookup_initial.msg"
+      amazon.aws.aws_s3:
+        bucket: "{{ init__download_mirror_bucket_name }}"
+        mode: list
+
+    - name: Filter Files not already in mirror to be downloaded
+      when: __download_mirror_lookup_initial.s3_keys is defined
+      loop: "{{ __download_mirror_lookup_initial.s3_keys }}"
+      loop_control:
+        loop_var: __init_s3key_item
+      ansible.builtin.set_fact:
+        init__file_mirror_targets: "{{ init__file_mirror_targets | reject('match', '^.+' + __init_s3key_item + '$') | list }}"
+
+- name: Set Download Mirror details in Globals for Cloud run
+  when:
+    - init__file_mirror_targets | length > 0
+    - init__download_mirror_bucket_name is defined
+  ansible.builtin.set_fact:
+    globals: "{{ globals | default({}) | combine( __download_mirror_spec, recursive=True ) }}"
+  vars:
+    __download_mirror_spec:
+      download_mirror_targets: "{{ init__file_mirror_targets }}"
+      utility_bucket_name: "{{ init__download_mirror_bucket_name }}"
+      create_utility_service: yes

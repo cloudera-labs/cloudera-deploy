@@ -1,0 +1,76 @@
+---
+
+# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Primary entrypoint for all CDP Installations
+
+- name: Init Cloudera-Deploy Run
+  hosts: localhost
+  tags: always
+  gather_facts: yes
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera_deploy
+        tasks_from: init
+
+- name: Import the Cloud Interactions Playbook
+  import_playbook: cloud.yml
+
+- name: Teardown Dynamic Inventory when requested
+  hosts: localhost
+  tags: [teardown,never]
+  gather_facts: yes
+  tasks:
+    - name: Remove current Dynamic Inventory file from Definition Path if exists
+      ansible.builtin.include_role:
+        name: cloudera_deploy
+        tasks_from: clean_dynamic_inventory
+
+- name: Prepare for Cloudera Cluster Run
+  hosts: localhost
+  tags: always
+  gather_facts: yes
+  tasks:
+    - name: Load Static Inventory file if present
+      when: mgmt is defined | bool
+      ansible.builtin.include_role:
+        name: cloudera_deploy
+        tasks_from: refresh_inventory
+      vars:
+        include_inventory_file: "{{ init__dynamic_inventory_artefact }}"
+
+    - name: Inject Download Mirror if requested
+      when:
+        - "'teardown' not in ansible_run_tags"
+        - "'cluster' in groups"
+      ansible.builtin.include_role:
+        name: cloudera_deploy
+        tasks_from: inject_download_mirror
+
+    - name: Distribute Facts to Inventory Hosts
+      when:
+        - "'cluster' in groups"
+      ansible.builtin.include_role:
+        name: cloudera_deploy
+        tasks_from: distribute_facts_to_inventory
+
+- name: Import the Cluster Interactions Playbook
+  when:
+    - "'cluster' in groups"
+    - mgmt is defined | bool
+  import_playbook: cluster.yml
+
+- name: Execute the Application Playbook
+  import_playbook: "{{ [definition_path, 'application.yml'] | path_join }}"

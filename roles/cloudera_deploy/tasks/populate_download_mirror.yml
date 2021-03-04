@@ -1,0 +1,91 @@
+---
+
+# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Ensure paths exist for File downloads to match required object structure [ will retry while utility VM boots ]
+  loop: "{{ globals.download_mirror_targets }}"
+  loop_control:
+    loop_var: __tmp_mirror_dir_item
+  ansible.builtin.file:
+    path: "/tmp/{{ globals.utility_bucket_name }}{{ __tmp_mirror_dir_item | urlsplit('path') | dirname }}"
+    state: directory
+
+- name: Request Async Download of Files to path structure
+  when: globals.download_mirror_targets
+  register: __download_mirror_rehost_results
+  loop: "{{ globals.download_mirror_targets }}"
+  loop_control:
+    loop_var: __mirror_fetch_item
+  async: 3600
+  poll: 0
+  ansible.builtin.get_url:
+    url: "{{ __mirror_fetch_item }}"
+    dest: "/tmp/{{ globals.utility_bucket_name }}{{ __mirror_fetch_item | urlsplit('path') }}"
+    url_username: "{{ cloudera_manager_repo_username | default(omit) }}"
+    url_password: "{{ cloudera_manager_repo_password | default(omit)  }}"
+
+- name: Track async downloads to completion  [ This may take up to an hour the first time for multi-gb Parcels ]
+  loop: "{{ __download_mirror_rehost_results.results }}"
+  loop_control:
+    loop_var: __download_async_item
+  register: __async_download_results
+  until: __async_download_results.finished is defined and __async_download_results.finished
+  delay: 15
+  retries: 300
+  async_status:
+    jid: "{{ __download_async_item.ansible_job_id }}"
+  failed_when:
+    - __download_async_item.failed == True
+    - __download_async_item.finished != 1
+
+# Unpack parcel tarballs
+- name: Unpack parcel tarballs for convenient use
+  loop: "{{ globals.download_mirror_targets | select('search', 'parcels.tar.gz') | list }}"
+  loop_control:
+    loop_var: __parcel_unpack_item
+  ansible.builtin.unarchive:
+    extra_opts: [ --strip-components=1 ]
+    remote_src: yes
+    src: "/var/www/html{{ __parcel_unpack_item | urlsplit('path') }}"
+    dest: "/var/www/html{{ __parcel_unpack_item | urlsplit('path') | dirname }}"
+    keep_newer: yes
+
+- name: Upload Download Mirror for AWS to S3
+  when: globals.infra_type == 'aws'
+  block:
+    # Prepare to sync cache dir to S3
+    - name: Prepare host for Python actions
+      become: yes
+      ansible.builtin.package:
+        name: "{{ __package_item }}"
+        state: present
+        lock_timeout: 180
+      loop_control:
+        loop_var: __package_item
+      loop:
+        - epel-release
+        - python-pip
+
+    - name: Prepare host for s3 actions
+      become: yes
+      ansible.builtin.pip:
+        name: boto3 >= 1.4.4
+
+    - name: Sync downloaded Files paths to S3 cache bucket
+      become: yes
+      community.aws.s3_sync:
+        bucket: "{{ globals.utility_bucket_name }}"
+        file_root: "/tmp/{{ globals.utility_bucket_name }}"
+        permission: private

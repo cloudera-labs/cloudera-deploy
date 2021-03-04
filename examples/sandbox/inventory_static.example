@@ -1,0 +1,44 @@
+# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+[cloudera_manager]
+ip-10-10-1-19.eu-west-1.compute.internal
+
+[cluster_master_nodes]
+ip-10-10-1-19.eu-west-1.compute.internal host_template=Master1
+
+[cluster_worker_nodes]
+ip-10-10-28-171.eu-west-1.compute.internal
+ip-10-10-29-99.eu-west-1.compute.internal
+ip-10-10-14-121.eu-west-1.compute.internal
+
+[cluster_worker_nodes:vars]
+host_template=Workers
+
+[cluster:children]
+cluster_master_nodes
+cluster_worker_nodes
+
+[db_server]
+ip-10-10-1-19.eu-west-1.compute.internal
+
+[deployment:children]
+cluster
+db_server
+
+[deployment:vars]
+# Ansible will defer to the running SSH Agent for relevant keys
+# Set the following to hardcode the SSH private key for the instances
+# ansible_ssh_private_key_file=~/.ssh/mykey.pem  
+ansible_user=centos
