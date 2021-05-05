@@ -82,7 +82,7 @@ The dependencies cover the full range of the automation tooling, from infrastruc
 
 === User Input Dependencies
 
-Cloudera Deploy does require a small set of user-supplied information for a successful deployment. A minimum set of user inputs is defined in a _profile_ file (see the link:profile.yml[profile.yml] template for details) and overrides those values if set elsewhere. For example, the `profile.yml` should define your password for the Administrator account of the deployed services.
+Cloudera Deploy does require a small set of user-supplied information for a successful deployment. A minimum set of user inputs is defined in a _profile_ file (see the link:profile.yml[profile.yml] template for details). For example, the `profile.yml` should define your password for the Administrator account of the deployed services.
 
 The default location for profiles is `~/.config/cloudera-deploy/profiles/`. Cloudera Deploy looks for the `default` file in this directory unless the Ansible runtime variable `profile` is set, e.g. `-e profile=my_custom_profile`. Creating additional profiles is simple, and you can use the `profile.yml` template as your starting point.
 
@@ -127,10 +127,13 @@ Cloudera Deploy exposes a set of tags that allows fine-grained inclusion and exc
 |Infrastructure (cloud provider assets) 
 
 |`plat`
-|Platform (CDP Public Cloud Datalakes; CDP Private Cloud clusters). Assumes `infra`.
+|Platform (CDP Public Cloud Datalakes). Assumes `infra`.
 
 |`run`
 |Runtime (CDP Public Cloud experiences, e.g. Cloudera Machine Learning (CML)). Assumes `infra` and `plat`.
+
+|`full_cluster`
+|CDP Private Cloud Base Clusters.
 |===
 
 _Current Tags: verify_inventory, verify, full_cluster, default_cluster, verify_definition, custom_repo, verify_parcels, database, security, kerberos, tls, ha, os, users, jdk, mysql_connector, oracle_connector, fetch_ca, cm, license, autotls, prereqs, restart_agents, heartbeat, mgmt, preload_parcels, kts, kms, restart_stale, teardown_ca, teardown_all, teardown_tls, teardown_cluster, infra, init, plat, run, validate_
@@ -178,8 +181,6 @@ The required `definition.yml` file contains top-level configuration keys that de
 .Top-Level Configuration Keys
 [cols="1,1"]
 |===
-|`globals`
-|User-supplied values like passwords and shared global values like naming suffixes
 
 |`infra`
 |Hosting infrastructure to manage
