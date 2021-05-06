@@ -18,7 +18,7 @@ set -e
 
 IMAGE_NAME="ghcr.io/cloudera-labs/cldr-runner"
 provider=${provider:-full}
-IMAGE_VER=latest
+IMAGE_VER=${image_ver:-latest}
 IMAGE_TAG=${provider}-${IMAGE_VER}
 IMAGE_FULL_NAME=${IMAGE_NAME}:${IMAGE_TAG}
 CONTAINER_NAME=cloudera-deploy
@@ -43,10 +43,15 @@ done
 
 echo "Ensure Default profile is present"
 if [ ! -f "${HOME}"/.config/cloudera-deploy/profiles/default ]; then
-  cp "${DIR}/profile.yml" "${HOME}"/.config/cloudera-deploy/profiles/default
+  if [ ! -f "${DIR}/profile.yml" ]; then
+    curl "https://raw.githubusercontent.com/cloudera-labs/cloudera-deploy/main/profile.yml" -o "${HOME}"/.config/cloudera-deploy/profiles/default
+  else
+    cp "${DIR}/profile.yml" "${HOME}"/.config/cloudera-deploy/profiles/default
+  fi
 fi
 
-echo "Mounting ${PROJECT_DIR} to container and Project Directory /runner/project"
+echo "Mounting ${PROJECT_DIR} to container as Project Directory /runner/project"
+echo "Creating Container ${CONTAINER_NAME} from image ${IMAGE_FULL_NAME}"
 
 if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
     if [ "$(docker ps -aq -f status=exited -f name=${CONTAINER_NAME})" ]; then
