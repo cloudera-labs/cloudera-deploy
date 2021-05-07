@@ -46,6 +46,16 @@ if [ ! -f "${HOME}"/.config/cloudera-deploy/profiles/default ]; then
   cp "${DIR}/profile.yml" "${HOME}"/.config/cloudera-deploy/profiles/default
 fi
 
+# If CLDR_COLLECTION_PATH is set, the default version in the container will be removed and this path added to the Ansible Collection path
+# The path supplied must be relative to PROJECT_DIR
+if [ -n "${CLDR_COLLECTION_PATH}" ]; then
+  echo "Path to custom Cloudera Collection supplied as ${CLDR_COLLECTION_PATH}, adding to Ansible Collection path"
+  ANSIBLE_COLLECTIONS_PATH="/opt/cldr-runner/collections:/runner/project/${CLDR_COLLECTION_PATH}"
+else
+  echo "Custom Cloudera Collection path not found"
+  ANSIBLE_COLLECTIONS_PATH="/opt/cldr-runner/collections"
+fi
+
 echo "Mounting ${PROJECT_DIR} to container and Project Directory /runner/project"
 
 if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
@@ -68,7 +78,7 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
       -e ANSIBLE_DEPRECATION_WARNINGS=false \
       -e ANSIBLE_HOST_KEY_CHECKING=true \
       -e ANSIBLE_SSH_RETRIES=10 \
-      -e ANSIBLE_COLLECTIONS_PATH="/opt/cldr-runner/collections" \
+      -e ANSIBLE_COLLECTIONS_PATH="${ANSIBLE_COLLECTIONS_PATH}" \
       -e ANSIBLE_ROLES_PATH="/opt/cldr-runner/roles" \
       --mount "type=bind,source=${HOME}/.aws,target=/home/runner/.aws" \
       --mount "type=bind,source=${HOME}/.config,target=/home/runner/.config" \
@@ -83,6 +93,10 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
 
     echo "Installing the cloudera-deploy project to the execution container '${CONTAINER_NAME}'"
     docker exec -td "${CONTAINER_NAME}" /usr/bin/env git clone https://github.com/cloudera-labs/cloudera-deploy.git /opt/cloudera-deploy --depth 1
+
+    if [ -n "${CLDR_COLLECTION_PATH}" ]; then
+      docker exec -td "${CONTAINER_NAME}" /usr/bin/env rm -rf /opt/cldr-runner/collections/ansible_collections/cloudera
+    fi
 fi
 
 echo 'Quickstart? Run this command -- ansible-playbook /opt/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" -t run,default_cluster'
