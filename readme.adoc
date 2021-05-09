@@ -1,34 +1,140 @@
 = Cloudera Deploy
+0.2, 2021-05-09, EZMode Documentation
+:page-layout: docs
+:description: 
+:imagesdir: ./images
+:icons: font
 :toc:
 :toc-placement!:
 
-*Automation wrappers for the Cloudera Ansible Collection*
+toc::[]
 
-Readme last updated: 2021-05-03
+= Automation For Cloudera Ansible Collection
 
-Cloudera Deploy is a toolset for deploying the Cloudera Data Platform (CDP). It's scope includes both Public and Private Cloud products and Base clusters, and application setup, execution and other post-deployment functions. 
+Cloudera Deploy is a toolset for deploying the Cloudera Data Platform (CDP). It's scope includes 
+** Public and Private Cloud products , Base clusters ** and application setup, execution and other post-deployment functions. 
 
 You can use Cloudera Deploy as your entrypoint for getting started with CDP. The toolset uses straightforward configuration definitions to instruct the automation functions, yet is extensible and highly configurable. The toolset can be a great foundation for custom entrypoints, CI/CD pipelines, and development environments.
 
-toc::[]
+== Quickstart With Defaults
 
-== Quickstart
+=== Pre-Requisites
+1. A _new_ version of `Docker`
+** https://docs.docker.com/docker-for-windows/install/[For Windows]
+** https://docs.docker.com/docker-for-mac/install/[For Macs]
+** Linux users, use your package manager.
 
-. Clone this repository into your preferred local project directory, e.g:  +
-    `git clone https://github.com/cloudera-labs/cloudera-deploy.git`
-. Ensure Docker is running, then run the `quickstart` script to prepare your local runner environment, e.g:  +
-    `cd cloudera-deploy && chmod +x quickstart.sh && ./quickstart.sh`
-. You should now see the orange _cldr_ prompt within the container environment. You may wish to set a default password and other entries in your local Cloudera Deploy user profile before proceeding:  +
-    `vi ~/.config/cloudera-deploy/profiles/default`
-. Ensure you have CDP and the appropriate cloud provider credentials present in your user profile:
-.. You may need to issue new https://aws.amazon.com/blogs/security/how-to-find-update-access-keys-password-mfa-aws-management-console/[AWS API Keys] (or Azure, GCP) and set them up with `aws configure`, etc.
-.. In addition, you may need to do the same with https://docs.cloudera.com/cdp/latest/cli/topics/mc-cli-generating-an-api-access-key.html[CDP API Keys] and set them up with `cdp configure`.
-. Run the main playbook with the example definition: +
-    `ansible-playbook /opt/cloudera-deploy/main.yml \` +
-    `-e "definition_path=examples/sandbox" \` +
-    `-t run,default_cluster`
+2. Get the latest version of `aws cli`
+** https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html[For Windows]
+** https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html[For Macs]
+** Linux users, use your package manager.
++
+If this is the first time you are installing `aws cli` , you will need to configure it by providing the right credentials.
++
+[source, bash]
+----
+aws configure
+----
+** Check the `aws` credentials are present in the right files in your home directory.
++
+[source, bash]
+----
+vim $HOME/.aws/credentials
+----
 
-== Configuration
+3. Get the latest version of `cdp cli`
+** https://docs.cloudera.com/cdp/latest/cli/topics/mc-installing-cdp-client.html[Installing CDP Cli].
+
+** If this is the first time you are installing `cdp cli`, you will need to configure it by providing the right credentials.
++
+``Getting the right credentials for CDP (public or private) might be an offline step.
+Once you have the right credentials continue below.
+Useful link https://docs.cloudera.com/cdp/latest/cli/topics/mc-cli-generating-an-api-access-key.html[CDP API Keys]
+``
+** Configure `cdp cli`
++
+[source, bash]
+----
+cdp configure
+----
+
+** Check the `cdp` credentials are present in the right files in your home directory.
++
+[source, bash]
+----
+vim $HOME/.cdp/credentials
+----
++
+TIP: Put `aws cli` and `cdp cli` in your `$PATH` to make it easily accessible.
+
+4. Check you have a generated ssh-keypair for your local profile. https://www.ssh.com/academy/ssh/keygen[How-To]
+
+5. Check you have a properly configured ssh-agent https://www.ssh.com/academy/ssh/keygen#adding-the-key-to-ssh-agent[How-To]
+
+=== Quickstart
+1. Clone this repository
++
+[source, bash]
+----
+git clone https://github.com/cloudera-labs/cloudera-deploy.git
+----
+WARNING: Do not modify any of the files in the repo as a user of the software.
+
+2. Check Docker is running
+** https://docs.docker.com/docker-for-windows/[For Windows]
+** https://docs.docker.com/docker-for-mac/[For Macs]
+** Linux users, use `systemd` (or another init system)
+
+3. Run `quickstart`
++
+[source, bash]
+----
+cd cloudera-deploy
+chmod +x quickstart.sh
+./quickstart.sh
+----
+3. If all goes well , you should see the orange _cldr_ prompt.
++
+``This is your interactive ansible runner environment and provides access to the relevant dependencies. Do _NOT_ run the example definition before making the changes below.``
+
+4. Modify your local `cloudera-deploy` user profile. This is present in your $HOME directory under `.config/cloudera-deploy/profiles/default`
+** On Linux , it would be:
++
+[source, bash]
+----
+vim ~/.config/cloudera-deploy/profiles/default
+----
+Properties to change: 
+** Recommended
+*** *admin_password:* Note the minimal password requirements
+*** *name_prefix:* Follow the notes mentioned 
+*** *infra_type:* The valid values are AWS, GCP, Azure
+*** *infra_region:* Region is dependent on the value provided in `infra_type`. This is _not_ checked later during the run.
+** Optional
+*** tags 
+
+5. Running
+** Run the main playbook with the defaults and your configuration at the orange _cldr_ prompt.
++
+[source, bash]
+----
+ansible-playbook /opt/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" -t run,default_cluster -vvv
+----
+** Log location
+*** The logs are present at `$HOME/.config/cloudera-deploy/log/latest-<currentdate>`
++
+[source,bash]
+----
+tail -100f $HOME/.config/cloudera-deploy/log/latest-2021-05-08_150448
+----
+
+IMPORTANT: The total time taken to deploy varies from 90 to 150 minutes depending on CDN, network connectivity etc. Keep checking the logs, if there are no errors, the scripts are working in the background.
+
+== Details
+
+CAUTION: Don't change the below configuration without getting comfortable with the quickstart a few times. 
+NOTE: Below pages will be migrated to github pages shortly.
+
 
 Cloudera Deploy is powered by https://github.com/ansible/ansible[Ansible] and provides a standard configuration and execution model for CDP deployments and their applications. It can be run within a container or directly on a host.
 
