@@ -4,7 +4,7 @@
 
 *Automation wrappers for the Cloudera Ansible Collection*
 
-Readme last updated: 2021-05-03
+Readme last updated: 2021-05-10
 
 Cloudera Deploy is a toolset for deploying the Cloudera Data Platform (CDP). It's scope includes both Public and Private Cloud products and Base clusters, and application setup, execution and other post-deployment functions. 
 
@@ -103,6 +103,27 @@ We suggest you set your default `infra_type` in `profile.yml` to match your pref
 For CDP Private Cloud you will need a valid Cloudera license file in order to download the software from the Cloudera repositories. We suggest this is stored in your user profile in `~/.cdp/` and set in the `profile.yml` config file.
 
 If you are also using Public Cloud infrastructure to host your CDP Private Cloud clusters, then you will need those credentials as well.
+
+== SSH Host Key Checking
+
+For CDP Private Cloud clusters and other direct inventory scenarios, you will need to manage SSH host key validation appropriate to your specific environment.
+
+**Be advised!** By default, the `quickstart.sh` script explicitly sets the `ANSIBLE_HOST_KEY_CHECKING` variable to `False` for ease-of-use with an introductory deployment. However, this setting is *not recommended* for any other deployment type. **For all other deployment types, you should directly manage your SSH host key checking.**
+
+A common approach is to create your own "startup" script using the `quickstart.sh` as a template, and setting the appropriate https://docs.ansible.com/ansible/latest/reference_appendices/config.html[Ansible SSH configuration variables].
+
+In some scenarios, for example, a reused pool of dynamic hosts within a development Openstack environment, you might wish to manage this control from your host machine's SSH config file. For example:
+
+[source]
+----
+# ~/.ssh/config
+
+# Disable host key checking only for your specific environment
+Host *.your.development.domain
+   StrictHostKeyChecking no
+----
+
+These settings will flow from your host to the Docker container's environment. 
 
 == Execution
 
