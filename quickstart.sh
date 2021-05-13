@@ -66,7 +66,7 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
       -e ANSIBLE_CALLBACK_WHITELIST="ansible.posix.profile_tasks" \
       -e ANSIBLE_GATHERING="smart" \
       -e ANSIBLE_DEPRECATION_WARNINGS=false \
-      -e ANSIBLE_HOST_KEY_CHECKING=true \
+      -e ANSIBLE_HOST_KEY_CHECKING=false \
       -e ANSIBLE_SSH_RETRIES=10 \
       -e ANSIBLE_COLLECTIONS_PATH="/opt/cldr-runner/collections" \
       -e ANSIBLE_ROLES_PATH="/opt/cldr-runner/roles" \
@@ -84,6 +84,17 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
     echo "Installing the cloudera-deploy project to the execution container '${CONTAINER_NAME}'"
     docker exec -td "${CONTAINER_NAME}" /usr/bin/env git clone https://github.com/cloudera-labs/cloudera-deploy.git /opt/cloudera-deploy --depth 1
 fi
+
+cat <<SSH_HOST_KEY
+
+  *** WARNING: SSH Host Key Checking is disabled by default. ***
+
+  This setting may not be suitable for Production deployments. 
+  If you wish to enable host key checking, please set the Ansible environment
+  variable, ANSIBLE_HOST_KEY_CHECKING, to True before execution. See the project 
+  documentation for further details on managing SSH host key checking.
+
+SSH_HOST_KEY
 
 echo 'Quickstart? Run this command -- ansible-playbook /opt/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" -t run,default_cluster'
 docker exec \
