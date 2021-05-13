@@ -10,7 +10,7 @@
 toc::[]
 
 = Automation For Cloudera Ansible Collection
-=======
+
 Cloudera Deploy is a toolset for deploying the Cloudera Data Platform (CDP). It's scope includes 
 ** Public and Private Cloud products , Base clusters ** and application setup, execution and other post-deployment functions. 
 
