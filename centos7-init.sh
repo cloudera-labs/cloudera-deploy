@@ -13,6 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 # This script sets up and environment suitable for running Ansible playbooks using Centos 7. It is distinct from the docker version of runner.
 # If you set any of the environment variables KUBECTL, AWS, GCLOUD, AZURE it will also install the relevant client libraries and dependencies for those operating modes.
 
@@ -67,3 +68,11 @@ EOF
 
 echo "Example command: "
 echo 'export ANSIBLE_LOG_PATH=~/ansible.log; ansible-playbook main.yml -e "definition_path=examples/sandbox"  --ask-pass -vv -i examples/sandbox/inventory_static.ini'
+
+cat <<SSH_HOST_KEY
+  *** WARNING: SSH Host Key Checking is disabled by default. ***
+  This setting may not be suitable for Production deployments. 
+  If you wish to enable host key checking, please set the Ansible environment
+  variable, ANSIBLE_HOST_KEY_CHECKING, to True before execution. See the project 
+  documentation for further details on managing SSH host key checking.
+SSH_HOST_KEY

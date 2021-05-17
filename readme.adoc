@@ -28,6 +28,9 @@ toc::[]
     `-e "definition_path=examples/sandbox" \` +
     `-t run,default_cluster`
 
+== Remote Execution
+Using the quickstart above will create you a pre-prepared container within which you can run the Ansible playbooks. If you are unable or unwilling to run Docker containers locally, or you wish to run the playbooks on a remote server, you can use the `centos7-init.sh` script, which will setup a similar environment with the right repositories and dependencies downloaded. All other instructions to run and configure the playbook remain the same.
+
 == Configuration
 
 Cloudera Deploy is powered by https://github.com/ansible/ansible[Ansible] and provides a standard configuration and execution model for CDP deployments and their applications. It can be run within a container or directly on a host.
