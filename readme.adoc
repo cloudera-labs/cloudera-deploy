@@ -6,7 +6,7 @@
 
 Readme last updated: 2021-05-10
 
-Cloudera Deploy is a toolset for deploying the Cloudera Data Platform (CDP). It's scope includes both Public and Private Cloud products and Base clusters, and application setup, execution and other post-deployment functions. 
+Cloudera Deploy is a toolset for deploying the Cloudera Data Platform (CDP). Its scope includes both Public and Private Cloud products and Base clusters, and application setup, execution and other post-deployment functions. 
 
 You can use Cloudera Deploy as your entrypoint for getting started with CDP. The toolset uses straightforward configuration definitions to instruct the automation functions, yet is extensible and highly configurable. The toolset can be a great foundation for custom entrypoints, CI/CD pipelines, and development environments.
 
