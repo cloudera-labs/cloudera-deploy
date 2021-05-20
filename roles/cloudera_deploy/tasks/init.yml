@@ -85,13 +85,12 @@
 
 # Admin Password
 - name: Prompt User for a password if not provided in config or vault
-  when: admin_password is undefined or admin_password | length < 4
+  when: admin_password is undefined or admin_password | length < 2
   block:
     - name: Prompt User for Password if not supplied
-      when: admin_password is undefined
       no_log: true
       pause:
-        prompt: "No admin password found in profile.yml or extra_vars, please provide a Password"
+        prompt: "No admin password found in profile.yml or extra_vars, or provided password too short; please provide a Password"
       register: __user_input_password
 
     - name: Set Admin password
@@ -105,8 +104,8 @@
     quiet: yes
     that:
       - admin_password is defined
-      - admin_password | length > 3
-    fail_msg: "You must supply an Admin Password"
+      - admin_password | length > 2
+    fail_msg: "You must supply an Admin Password of at least 2 chars"
 
 # Handle Definition File
 - name: Seek Definition files in Definition Path
@@ -165,7 +164,6 @@
   vars:
     user_config:
       name_prefix: "{{ name_prefix | default(default_name_prefix) }}"
-      admin_password: "{{ admin_password }}"
       tags: "{{ tags | default(omit) }}"
       region: "{{ infra_region | default(default_infra_region) }}"
       infra_type: "{{ infra_type | default(default_infra_type) }}"
@@ -343,6 +341,20 @@
     msg: "{{ globals }}"
     verbosity: 3
 
+- name: Determine if Cloud Roles should be called
+  ansible.builtin.set_fact:
+    init__call_cloud_role: "{{ infra is defined or env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined | default(False) }}"
+    init__call_cdp_public: "{{ env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined | default(False) }}"
+
+- name: Check Admin Password is CDP Public compliant when calling CDP Public
+  when: init__call_cdp_public | bool
+  ansible.builtin.assert:
+    that:
+      - admin_password is match('^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,64}$')
+    fail_msg: >-
+      Admin Password must comply with CDP Public requirements: 1 Upper, 1 Special, 1 Number, 8-64 chars.
+    quiet: yes
+
 - name: Add no_log variables to globals at end of init
   no_log: true
   ansible.builtin.set_fact:
@@ -350,7 +362,3 @@
   vars:
     __no_log_globals:
       admin_password: "{{ admin_password | mandatory }}"
-
-- name: Determine if Cloud Roles should be called
-  ansible.builtin.set_fact:
-    init__call_cloud_role: "{{ infra is defined or env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined | default(False) }}"
