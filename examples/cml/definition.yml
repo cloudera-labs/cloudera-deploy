@@ -28,7 +28,8 @@ ml:
             minInstances: 1
           instanceCount: 0
           instanceTier: "ON_DEMAND"
-          instanceType: m5.4xlarge
+          instanceType: m5.4xlarge  # AWS
+#         instanceType: Standard_D8_v3  # Azure
           rootVolume:
             size: 100
         - name: gpu_settings
@@ -37,6 +38,7 @@ ml:
             minInstances: 0
           instanceCount: 0
           instanceTier: "ON_DEMAND"
-          instanceType: "p2.8xlarge"
+          instanceType: "p2.8xlarge" # AWS
+#         instanceType: Standard_D8_v3  # Azure
           rootVolume:
             size: 100
