@@ -63,6 +63,22 @@ fi
 echo "Mounting ${PROJECT_DIR} to container as Project Directory /runner/project"
 echo "Creating Container ${CONTAINER_NAME} from image ${IMAGE_FULL_NAME}"
 
+echo "Checking OS"
+if [ ! -f "/run/host-services/ssh-auth.sock" ]; 
+then
+   if [ ! -z "$SSH_AUTH_SOCK" ]; 
+   then 
+        SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
+   else
+	echo "SSH_AUTH_SOCK is empty or not set, unable to proceed. Exiting" 
+	exit -1
+   fi
+else
+	SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
+fi
+
+echo "SSH authentication for container taken from ${SSH_AUTH_SOCK}"
+
 if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
     if [ "$(docker ps -aq -f status=exited -f name=${CONTAINER_NAME})" ]; then
         # cleanup if exited
@@ -74,7 +90,7 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
     docker run -td \
       --detach-keys="ctrl-@" \
       -v "${PROJECT_DIR}":/runner/project \
-      --mount type=bind,src=/run/host-services/ssh-auth.sock,target=/run/host-services/ssh-auth.sock \
+      --mount type=bind,src=${SSH_AUTH_SOCK},target=/run/host-services/ssh-auth.sock \
       -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" \
       -e ANSIBLE_LOG_PATH="/home/runner/.config/cloudera-deploy/log/${CLDR_BUILD_VER:-latest}-$(date +%F_%H%M%S)" \
       -e ANSIBLE_INVENTORY="inventory" \
