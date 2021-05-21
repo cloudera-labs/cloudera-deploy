@@ -48,14 +48,14 @@ fi
 
 echo "Mounting ${PROJECT_DIR} to container and Project Directory /runner/project"
 
-echo "Checking O.S..."
+echo "Checking OS"
 if [ ! -f "/run/host-services/ssh-auth.sock" ]; 
 then
    if [ ! -z "$SSH_AUTH_SOCK" ]; 
    then 
         SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
    else
-	echo "SSH_AUTH_SOCK is empty or not set , unable to proceed, exiting" 
+	echo "SSH_AUTH_SOCK is empty or not set, unable to proceed. Exiting" 
 	exit -1
    fi
 else
