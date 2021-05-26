@@ -103,61 +103,6 @@
     - full_cluster
 
 # ENDBLOCK # Verify Inventory and Definition
-# STARTBLOCK # Create Cluster Service Infrastructure
-
-- name: Install RDBMS
-  hosts: db_server
-  become: yes
-  roles:
-    - cloudera.cluster.infrastructure.rdbms
-  tags:
-    - database
-    - default_cluster
-    - full_cluster
-
-- name: Install KDC
-  hosts: krb5_server
-  become: yes
-  roles:
-    - role: cloudera.cluster.infrastructure.krb5_server
-  tags:
-    - security
-    - kerberos
-    - tls
-    - full_cluster
-
-- name: Setup KRB5 clients
-  hosts: cloudera_manager, cluster
-  become: yes
-  roles:
-    - role: cloudera.cluster.infrastructure.krb5_client
-      when: "'krb5_server' in groups"
-  tags:
-    - security
-    - kerberos
-    - tls
-    - full_cluster
-
-- name: Install CA server
-  hosts: ca_server
-  become: yes
-  roles:
-    - cloudera.cluster.infrastructure.ca_server
-  tags:
-    - security
-    - tls
-    - full_cluster
-
-- name: Install HAProxy
-  hosts: haproxy
-  become: yes
-  roles:
-    - cloudera.cluster.infrastructure.haproxy
-  tags:
-    - ha
-    - full_cluster
-
-# ENDBLOCK # Create Cluster Service Infrastructure
 # STARTBLOCK # Prepare Nodes
 
 - name: Apply OS pre-requisite configurations
@@ -214,6 +159,51 @@
     - full_cluster
 
 # ENDBLOCK # Prepare Nodes
+# STARTBLOCK # Create Cluster Service Infrastructure
+
+- name: Install KDC
+  hosts: krb5_server
+  become: yes
+  roles:
+    - role: cloudera.cluster.infrastructure.krb5_server
+  tags:
+    - security
+    - kerberos
+    - tls
+    - full_cluster
+
+- name: Setup KRB5 clients
+  hosts: cloudera_manager, cluster
+  become: yes
+  roles:
+    - role: cloudera.cluster.infrastructure.krb5_client
+      when: "'krb5_server' in groups"
+  tags:
+    - security
+    - kerberos
+    - tls
+    - full_cluster
+
+- name: Install CA server
+  hosts: ca_server
+  become: yes
+  roles:
+    - cloudera.cluster.infrastructure.ca_server
+  tags:
+    - security
+    - tls
+    - full_cluster
+
+- name: Install HAProxy
+  hosts: haproxy
+  become: yes
+  roles:
+    - cloudera.cluster.infrastructure.haproxy
+  tags:
+    - ha
+    - full_cluster
+
+# ENDBLOCK # Create Cluster Service Infrastructure
 # STARTBLOCK # Prepare TLS
 
 - name: Fetch CA certificates
@@ -260,6 +250,17 @@
     - always
 
 # ENDBLOCK # Prepare TLS
+# STARTBLOCK # Install Cluster Service Infrastructure II
+- name: Install RDBMS
+  hosts: db_server
+  become: yes
+  roles:
+    - cloudera.cluster.infrastructure.rdbms
+  tags:
+    - database
+    - default_cluster
+    - full_cluster
+# ENDBLOCK # Install Cluster Service Infrastructure II
 # STARTBLOCK # NiFi TLS
 
 - name: Setup symlinks for NiFi TLS keystore and truststore
