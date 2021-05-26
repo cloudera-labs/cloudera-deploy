@@ -27,81 +27,88 @@ You can use Cloudera Deploy as your entrypoint for getting started with CDP. The
 == Quickstart
 
 === Prerequisites
-. Get the latest version of **Docker**.
-** https://docs.docker.com/docker-for-windows/install/[For Windows]
-** https://docs.docker.com/docker-for-mac/install/[For Macs]
-** Linux users, use your package manager.
 
-. Get the latest version of the **AWS CLI**.
-** https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html[For Windows]
-** https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html[For Macs]
-** Linux users, use your package manager.
+==== Install Docker
 
-. If this is the first time you are installing the AWS CLI:
-** Configure the program by providing your credentials.
-+
+Get the latest version of **Docker**.
+
+* https://docs.docker.com/docker-for-windows/install/[For Windows]
+* https://docs.docker.com/docker-for-mac/install/[For Macs]
+* Linux users, use your package manager.
+
+==== (Optional) Install AWS CLI
+
+Get the latest version of the **AWS CLI**.
+
+* https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html[For Windows]
+* https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html[For Macs]
+* Linux users, use your package manager.
+
+NOTE: The Quickstart image prepackages the AWS CLI.
+
+If this is the first time you are installing the AWS CLI, configure the program by providing your credentials.
+
 [source, bash]
 ----
 aws configure
 ----
 
-** Check the `aws` credentials are present in the right files in your home directory.
-+
-[source, bash]
-----
-vim $HOME/.aws/credentials
-----
+Visit the https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html[AWS CLI User Guide] for further details regarding credential management.
 
-. Get the latest version of the **CDP CLI**.
+==== (Optional) Install CDP CLI
+
+Get the latest version of the **CDP CLI**.
+
 ** https://docs.cloudera.com/cdp/latest/cli/topics/mc-installing-cdp-client.html[Install CDP CLI].
 
-. If this is the first time you are installing the CDP CLI, you will need to configure the program by providing the right credentials.
-+
-====
-Getting the right credentials for CDP (public or private) might be an offline step.
-Once you have the right credentials continue below.
-See https://docs.cloudera.com/cdp/latest/cli/topics/mc-cli-generating-an-api-access-key.html[CDP API Keys] for further details.
-====
+NOTE: The Quickstart image prepackages the CPI CLI.
 
-** Configure the program by providing your credentials.
-+
+If this is the first time you are installing the CDP CLI, you will need to configure the program by providing the right credentials.
+
 [source, bash]
 ----
 cdp configure
 ----
 
-** Check the `cdp` credentials are present in the right files in your home directory.
-+
-[source, bash]
-----
-vim $HOME/.cdp/credentials
-----
+Visit the https://docs.cloudera.com/cdp/latest/cli/topics/mc-configuring-cdp-client-with-the-api-access-key.html[CDP CLI User Guide] for further details regarding credential management.
 
-. Check you have a generated SSH keypair for your local profile.
-** Read the https://www.ssh.com/academy/ssh/keygen[SSH Keygen How-To]
+==== (Recommended) Confirm your SSH Keypair
 
-. Check you have a properly configured SSH Agent.
-** Read the https://www.ssh.com/academy/ssh/keygen#adding-the-key-to-ssh-agent[SSH Agent How-To]
+Ensure that you have a generated SSH keypair for your local profile. Visit the https://www.ssh.com/academy/ssh/keygen[SSH Keygen How-To] for details.
+
+NOTE: The Quickstart will generate a SSH keypair if none is provided.
+
+==== (Recommended) Confirm your SSH Agent
+
+Ensure that you have a properly configured SSH Agent. Visit the https://www.ssh.com/academy/ssh/keygen#adding-the-key-to-ssh-agent[SSH Agent How-To] for details.
 
 TIP: Put AWS CLI and CDP CLI programs in your `$PATH` to make these two programs easily accessible.
 
 === Setup
 
-. Clone this repository
-+
+==== Clone the repository
+
+Clone this, i.e. the `cloudera-deploy`, repository.
+
 [source, bash]
 ----
 git clone https://github.com/cloudera-labs/cloudera-deploy.git
 ----
+
 WARNING: Be careful to not modify any of the files in the project as a user of the software. The vast majority of changes are managed through configurations provided to these project files.
 
-. Check that **Docker** is running.
-** https://docs.docker.com/docker-for-windows/[For Windows]
-** https://docs.docker.com/docker-for-mac/[For Macs]
-** Linux users, use `systemd` (or another init system)
+==== Confirm your Docker service
 
-. Run the `quickstart.sh` entrypoint script.
-+
+Check that **Docker** is running.
+
+* https://docs.docker.com/docker-for-windows/[For Windows]
+* https://docs.docker.com/docker-for-mac/[For Macs]
+* Linux users, use `systemd` (or another init system)
+
+==== Execute the Quickstart script
+
+Run the `quickstart.sh` entrypoint script. This script will prepare and execute the Ansible Runner container.
+
 [source, bash]
 ----
 cd cloudera-deploy
@@ -109,42 +116,49 @@ chmod +x quickstart.sh
 ./quickstart.sh
 ----
 
-. Confirm that you have the orange _cldr_ prompt.
-+
-====
-This is your interactive Ansible Runner environment and provides builtin access to the relevant dependencies for CDP.
-====
-+
+==== Confirm the Quickstart environment
+
+Confirm that you have the orange _cldr_ prompt. This is your interactive Ansible Runner environment and provides builtin access to the relevant dependencies for CDP.
+
 IMPORTANT: Do _NOT_ run the example definition until you have made the changes below.
 
-. Modify your local `cloudera-deploy` user profile. This is present in your `$HOME` directory under `~/.config/cloudera-deploy/profiles/default`.
-+
+==== Setup your user profile
+
+Modify your local `cloudera-deploy` user profile. Your profile is present in your `$HOME` directory under `~/.config/cloudera-deploy/profiles/default`.
+
 [source, bash]
 ----
 vim ~/.config/cloudera-deploy/profiles/default
 ----
-Properties to change: 
-** Recommended
-*** *admin_password:* Note the minimal password requirements.
-*** *name_prefix:* Follow the notes mentioned.
-*** *infra_type:* The valid values are `aws`, `gcp`, `azure`.
-*** *infra_region:* Region is dependent on the value provided in `infra_type`. This is _not_ checked later during the run.
-** Optional
-*** tags 
+
+===== Properties to change
+
+* Recommended
+** *admin_password:* Note the password requirements (see the link:profile.yml[profile template] comments).
+** *name_prefix:* Note the namespace requirements (see the link:profile.yml[profile template] comments).
+** *infra_type:* The valid values are `aws`, `gcp`, `azure`.
+** *infra_region:* Region is dependent on the value provided in `infra_type`.
+* Optional
+** tags (see the link:profile.yml[profile template] comments)
+
+WARNING: Please ensure you provide a valid region for the `infra_type` property.
 
 === Execution
 
-. Run the main playbook with the defaults and your configuration at the orange _cldr_ prompt.
-+
+==== Run the main playbook
+
+Run the main playbook with the defaults and your configuration at the orange _cldr_ prompt.
+
 [source, bash]
 ----
 ansible-playbook /opt/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" \
     -t run,default_cluster -vvv
 ----
 
-. View the Ansible execution logs.
-** The logs are present at `$HOME/.config/cloudera-deploy/log/latest-<currentdate>`
-+
+==== View the Ansible execution logs
+
+The logs are present at `$HOME/.config/cloudera-deploy/log/latest-<currentdate>`
+
 [source,bash]
 ----
 tail -100f $HOME/.config/cloudera-deploy/log/latest-2021-05-08_150448
