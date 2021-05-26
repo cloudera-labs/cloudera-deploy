@@ -276,13 +276,12 @@
 # ENDBLOCK # NiFi TLS
 # STARTBLOCK # Install Cloudera Manager
 
-- name: Install Cloudera Manager daemons and agents
+- name: Install Cloudera Manager daemons
   hosts: cloudera_manager, cluster
   become: yes
   any_errors_fatal: true
   roles:
     - role: cloudera.cluster.cloudera_manager.daemons
-    - role: cloudera.cluster.cloudera_manager.agent
   tags:
     - cm
     - default_cluster
@@ -308,6 +307,16 @@
     - license
     - default_cluster
     - full_cluster
+
+- name: Install Cloudera Manager agents
+  hosts: cloudera_manager, cluster
+  become: yes
+  any_errors_fatal: true
+  roles:
+    - role: cloudera.cluster.cloudera_manager.agent
+  tags:
+    - cm
+    - default_cluster
 
 - name: Configure Cloudera Manager server for TLS
   hosts: cloudera_manager
