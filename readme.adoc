@@ -7,6 +7,8 @@ cloudera-labs@cloudera.com
 :icons: font
 :toc:
 :toc-placement!:
+:sectnums:
+:sectnumlevels 3:
 ifdef::env-github[]
 :tip-caption: :bulb:
 :note-caption: :information_source:
@@ -27,6 +29,8 @@ You can use Cloudera Deploy as your entrypoint for getting started with CDP. The
 == Quickstart
 
 === Prerequisites
+
+:sectnums:
 
 ==== Install Docker
 
@@ -139,7 +143,7 @@ vim ~/.config/cloudera-deploy/profiles/default
 ** *infra_type:* The valid values are `aws`, `gcp`, `azure`.
 ** *infra_region:* Region is dependent on the value provided in `infra_type`.
 * Optional
-** tags (see the link:profile.yml[profile template] comments)
+** *tags* (see the link:profile.yml[profile template] comments)
 
 WARNING: Please ensure you provide a valid region for the `infra_type` property.
 
