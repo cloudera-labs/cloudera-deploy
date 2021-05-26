@@ -1,5 +1,5 @@
 = Cloudera Deploy
-0.2, 2021-05-09, EZMode Documentation
+0.3, 2021-05-13, EZMode Documentation
 :page-layout: docs
 :description: 
 :imagesdir: ./images
@@ -18,34 +18,37 @@ You can use Cloudera Deploy as your entrypoint for getting started with CDP. The
 
 == Quickstart With Defaults
 
-=== Pre-Requisites
-1. A _new_ version of `Docker`
-** https://docs.docker.com/docker-for-windows/install/[For Windows]
-** https://docs.docker.com/docker-for-mac/install/[For Macs]
-** Linux users, use your package manager.
-
-2. Get the latest version of `aws cli`
-** https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html[For Windows]
-** https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html[For Macs]
-** Linux users, use your package manager.
-+
-If this is the first time you are installing `aws cli` , you will need to configure it by providing the right credentials.
-+
-[source, bash]
-----
-aws configure
-----
-** Check the `aws` credentials are present in the right files in your home directory.
+=== Pre-Flight Checks
+1. Check your `aws` credentials are present in the right directory.
 +
 [source, bash]
 ----
 vim $HOME/.aws/credentials
 ----
 
-3. Get the latest version of `cdp cli`
+2. Check your `cdp` credentials are present in the right directory.
++
+[source, bash]
+----
+vim $HOME/.cdp/credentials
+----
+
+3. `aws` cli and `cdp` cli are pre-installed in the quick start below. The next steps are optional.
+.. _(OPTIONAL)_ Get the latest version of `aws cli`
+** https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html[For Windows]
+** https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html[For Macs]
+** Linux users, use your package manager.
++
+If this is the first time you are installing `aws` cli , you will need to configure it by providing the right credentials.
++
+[source, bash]
+----
+aws configure
+----
+.. _(OPTIONAL)_ Get the latest version of `cdp` cli
 ** https://docs.cloudera.com/cdp/latest/cli/topics/mc-installing-cdp-client.html[Installing CDP Cli].
 
-** If this is the first time you are installing `cdp cli`, you will need to configure it by providing the right credentials.
+** If this is the first time you are installing `cdp` cli, you will need to configure it by providing the right credentials.
 +
 ``Getting the right credentials for CDP (public or private) might be an offline step.
 Once you have the right credentials continue below.
@@ -57,19 +60,17 @@ Useful link https://docs.cloudera.com/cdp/latest/cli/topics/mc-cli-generating-an
 ----
 cdp configure
 ----
+TIP: Put `aws` cli and `cdp` cli in your `$PATH` to make it easily accessible.
 
-** Check the `cdp` credentials are present in the right files in your home directory.
-+
-[source, bash]
-----
-vim $HOME/.cdp/credentials
-----
-+
-TIP: Put `aws cli` and `cdp cli` in your `$PATH` to make it easily accessible.
+=== Pre-Requisites
+1. A _new_ version of `Docker`
+** https://docs.docker.com/docker-for-windows/install/[For Windows]
+** https://docs.docker.com/docker-for-mac/install/[For Macs]
+** Linux users, use your package manager.
 
-4. Check you have a generated ssh-keypair for your local profile. https://www.ssh.com/academy/ssh/keygen[How-To]
+2. Check you have a generated ssh-keypair for your local profile. https://www.ssh.com/academy/ssh/keygen[How-To]
 
-5. Check you have a properly configured ssh-agent https://www.ssh.com/academy/ssh/keygen#adding-the-key-to-ssh-agent[How-To]
+3. Check you have a properly configured ssh-agent https://www.ssh.com/academy/ssh/keygen#adding-the-key-to-ssh-agent[How-To]
 
 === Quickstart
 1. Clone this repository
@@ -97,7 +98,7 @@ chmod +x quickstart.sh
 +
 ``This is your interactive ansible runner environment and provides access to the relevant dependencies. Do _NOT_ run the example definition before making the changes below.``
 
-4. Modify your local `cloudera-deploy` user profile. This is present in your $HOME directory under `.config/cloudera-deploy/profiles/default`
+4. Modify your local `cloudera-deploy` user profile. This is present in your `$HOME` directory under `.config/cloudera-deploy/profiles/default`
 ** On Linux , it would be:
 +
 [source, bash]
