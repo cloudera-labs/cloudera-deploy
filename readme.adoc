@@ -1,37 +1,180 @@
 = Cloudera Deploy
+cloudera-labs@cloudera.com
+0.3, 2021-05-21: Quickstart
+:page-layout: docs
+:description: Cloudera Deploy Documentation
+:imagesdir: ./images
+:icons: font
 :toc:
 :toc-placement!:
-
-*Automation wrappers for the Cloudera Ansible Collection*
-
-Readme last updated: 2021-05-10
-
-Cloudera Deploy is a toolset for deploying the Cloudera Data Platform (CDP). Its scope includes both Public and Private Cloud products and Base clusters, and application setup, execution and other post-deployment functions. 
-
-You can use Cloudera Deploy as your entrypoint for getting started with CDP. The toolset uses straightforward configuration definitions to instruct the automation functions, yet is extensible and highly configurable. The toolset can be a great foundation for custom entrypoints, CI/CD pipelines, and development environments.
+:sectnums:
+:sectnumlevels 3:
+ifdef::env-github[]
+:tip-caption: :bulb:
+:note-caption: :information_source:
+:important-caption: :heavy_exclamation_mark:
+:caution-caption: :fire:
+:warning-caption: :warning:
+endif::[]
 
 toc::[]
 
+== Automation For the Cloudera Data Platform
+
+Cloudera Deploy is a toolset for deploying the Cloudera Data Platform (CDP). Its scope includes 
+** Public Cloud** and **Private Cloud** products, **Private Cloud Base** clusters, and application setup, execution, and other post-deployment functions. 
+
+You can use Cloudera Deploy as your entrypoint for getting started with CDP. The toolset uses straightforward configuration definitions to instruct the automation functions, yet is extensible and highly configurable. The toolset can be a great foundation for custom entrypoints, CI/CD pipelines, and development environments.
+
 == Quickstart
 
-. Clone this repository into your preferred local project directory, e.g:  +
-    `git clone https://github.com/cloudera-labs/cloudera-deploy.git`
-. Ensure Docker is running, then run the `quickstart` script to prepare your local runner environment, e.g:  +
-    `cd cloudera-deploy && chmod +x quickstart.sh && ./quickstart.sh`
-. You should now see the orange _cldr_ prompt within the container environment. You may wish to set a default password and other entries in your local Cloudera Deploy user profile before proceeding:  +
-    `vi ~/.config/cloudera-deploy/profiles/default`
-. Ensure you have CDP and the appropriate cloud provider credentials present in your user profile:
-.. You may need to issue new https://aws.amazon.com/blogs/security/how-to-find-update-access-keys-password-mfa-aws-management-console/[AWS API Keys] (or Azure, GCP) and set them up with `aws configure`, etc.
-.. In addition, you may need to do the same with https://docs.cloudera.com/cdp/latest/cli/topics/mc-cli-generating-an-api-access-key.html[CDP API Keys] and set them up with `cdp configure`.
-. Run the main playbook with the example definition: +
-    `ansible-playbook /opt/cloudera-deploy/main.yml \` +
-    `-e "definition_path=examples/sandbox" \` +
-    `-t run,default_cluster`
+=== Prerequisites
 
-== Remote Execution
-Using the quickstart above will create you a pre-prepared container within which you can run the Ansible playbooks. If you are unable or unwilling to run Docker containers locally, or you wish to run the playbooks on a remote server, you can use the `centos7-init.sh` script, which will setup a similar environment with the right repositories and dependencies downloaded. All other instructions to run and configure the playbook remain the same.
+:sectnums:
 
-== Configuration
+==== Install Docker
+
+Get the latest version of **Docker**.
+
+* https://docs.docker.com/docker-for-windows/install/[For Windows]
+* https://docs.docker.com/docker-for-mac/install/[For Macs]
+* Linux users, use your package manager.
+
+==== (Optional) Install AWS CLI
+
+Get the latest version of the **AWS CLI**.
+
+* https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html[For Windows]
+* https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html[For Macs]
+* Linux users, use your package manager.
+
+NOTE: The Quickstart image prepackages the AWS CLI.
+
+If this is the first time you are installing the AWS CLI, configure the program by providing your credentials.
+
+[source, bash]
+----
+aws configure
+----
+
+Visit the https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html[AWS CLI User Guide] for further details regarding credential management.
+
+==== (Optional) Install CDP CLI
+
+Get the latest version of the **CDP CLI**.
+
+** https://docs.cloudera.com/cdp/latest/cli/topics/mc-installing-cdp-client.html[Install CDP CLI].
+
+NOTE: The Quickstart image prepackages the CPI CLI.
+
+If this is the first time you are installing the CDP CLI, you will need to configure the program by providing the right credentials.
+
+[source, bash]
+----
+cdp configure
+----
+
+Visit the https://docs.cloudera.com/cdp/latest/cli/topics/mc-configuring-cdp-client-with-the-api-access-key.html[CDP CLI User Guide] for further details regarding credential management.
+
+==== (Recommended) Confirm your SSH Keypair
+
+Ensure that you have a generated SSH keypair for your local profile. Visit the https://www.ssh.com/academy/ssh/keygen[SSH Keygen How-To] for details.
+
+NOTE: The Quickstart will generate a SSH keypair if none is provided.
+
+==== (Recommended) Confirm your SSH Agent
+
+Ensure that you have a properly configured SSH Agent. Visit the https://www.ssh.com/academy/ssh/keygen#adding-the-key-to-ssh-agent[SSH Agent How-To] for details.
+
+TIP: Put AWS CLI and CDP CLI programs in your `$PATH` to make these two programs easily accessible.
+
+=== Setup
+
+==== Clone the repository
+
+Clone this, i.e. the `cloudera-deploy`, repository.
+
+[source, bash]
+----
+git clone https://github.com/cloudera-labs/cloudera-deploy.git
+----
+
+WARNING: Be careful to not modify any of the files in the project as a user of the software. The vast majority of changes are managed through configurations provided to these project files.
+
+==== Confirm your Docker service
+
+Check that **Docker** is running.
+
+* https://docs.docker.com/docker-for-windows/[For Windows]
+* https://docs.docker.com/docker-for-mac/[For Macs]
+* Linux users, use `systemd` (or another init system)
+
+==== Execute the Quickstart script
+
+Run the `quickstart.sh` entrypoint script. This script will prepare and execute the Ansible Runner container.
+
+[source, bash]
+----
+cd cloudera-deploy
+chmod +x quickstart.sh
+./quickstart.sh
+----
+
+==== Confirm the Quickstart environment
+
+Confirm that you have the orange _cldr_ prompt. This is your interactive Ansible Runner environment and provides builtin access to the relevant dependencies for CDP.
+
+IMPORTANT: Do _NOT_ run the example definition until you have made the changes below.
+
+==== Setup your user profile
+
+Modify your local `cloudera-deploy` user profile. Your profile is present in your `$HOME` directory under `~/.config/cloudera-deploy/profiles/default`.
+
+[source, bash]
+----
+vim ~/.config/cloudera-deploy/profiles/default
+----
+
+===== Properties to change
+
+* Recommended
+** *admin_password:* Note the password requirements (see the link:profile.yml[profile template] comments).
+** *name_prefix:* Note the namespace requirements (see the link:profile.yml[profile template] comments).
+** *infra_type:* The valid values are `aws`, `gcp`, `azure`.
+** *infra_region:* Region is dependent on the value provided in `infra_type`.
+* Optional
+** *tags* (see the link:profile.yml[profile template] comments)
+
+WARNING: Please ensure you provide a valid region for the `infra_type` property.
+
+=== Execution
+
+==== Run the main playbook
+
+Run the main playbook with the defaults and your configuration at the orange _cldr_ prompt.
+
+[source, bash]
+----
+ansible-playbook /opt/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" \
+    -t run,default_cluster -vvv
+----
+
+==== View the Ansible execution logs
+
+The logs are present at `$HOME/.config/cloudera-deploy/log/latest-<currentdate>`
+
+[source,bash]
+----
+tail -100f $HOME/.config/cloudera-deploy/log/latest-2021-05-08_150448
+----
+
+IMPORTANT: The total time to deploy varies from 90 to 150 minutes, depending on CDN, network connectivity, etc. Keep checking the logs; if there are no errors, the scripts are working in the background.
+
+== Project Details
+
+CAUTION: Don't change the project configuration without getting comfortable with the *quickstart* a few times.
+
+NOTE: Below pages will be migrated to Github pages shortly.
 
 Cloudera Deploy is powered by https://github.com/ansible/ansible[Ansible] and provides a standard configuration and execution model for CDP deployments and their applications. It can be run within a container or directly on a host.
 
@@ -47,9 +190,9 @@ Alternatively, and especially if you plan on running Cloudera Deploy in your own
 
 Cloudera Deploy relies on a number of Ansible collections:
 
-- `cloudera.exe`
-- `cloudera.cluster`
-- `cloudera.cloud`
+- https://github.com/cloudera-labs/cloudera.exe[`cloudera.exe`]
+- https://github.com/cloudera-labs/cloudera.cluster[`cloudera.cluster`]
+- https://github.com/cloudera-labs/cloudera.cloud[`cloudera.cloud`]
 
 And roles:
 
@@ -63,7 +206,8 @@ Cloudera Deploy does have a single dependency for its own execution, the https:/
 [source, bash]
 ----
 # Get the cldr-runner dependency file first
-curl https://github.com/cloudera-labs/cldr-runner/tree/main/payload/deps/ansible.yml --output requirements.yml
+curl https://github.com/cloudera-labs/cldr-runner/tree/main/payload/deps/ansible.yml \
+    --output requirements.yml
 
 # Install the collections (and their dependencies)
 ansible-galaxy collection install -r requirements.yml
@@ -111,7 +255,7 @@ If you are also using Public Cloud infrastructure to host your CDP Private Cloud
 
 For CDP Private Cloud clusters and other direct inventory scenarios, you will need to manage SSH host key validation appropriate to your specific environment.
 
-**Be advised!** By default, the `quickstart.sh` script explicitly sets the `ANSIBLE_HOST_KEY_CHECKING` variable to `False` for ease-of-use with an introductory deployment. However, this setting is *not recommended* for any other deployment type. **For all other deployment types, you should directly manage your SSH host key checking.**
+IMPORTANT: By default, the `quickstart.sh` script explicitly sets the `ANSIBLE_HOST_KEY_CHECKING` variable to `False` for ease-of-use with an introductory deployment. However, this setting is *not recommended* for any other deployment type. **For all other deployment types, you should directly manage your SSH host key checking.**
 
 A common approach is to create your own "startup" script using the `quickstart.sh` as a template, and setting the appropriate https://docs.ansible.com/ansible/latest/reference_appendices/config.html[Ansible SSH configuration variables].
 
@@ -126,7 +270,7 @@ Host *.your.development.domain
    StrictHostKeyChecking no
 ----
 
-These settings will flow from your host to the Docker container's environment. 
+These settings will flow from your host to the Docker container's environment if you use the `quickstart.sh` script.
 
 == Execution
 
@@ -160,7 +304,7 @@ Cloudera Deploy exposes a set of tags that allows fine-grained inclusion and exc
 |CDP Private Cloud Base Clusters.
 |===
 
-_Current Tags: verify_inventory, verify, full_cluster, default_cluster, verify_definition, custom_repo, verify_parcels, database, security, kerberos, tls, ha, os, users, jdk, mysql_connector, oracle_connector, fetch_ca, cm, license, autotls, prereqs, restart_agents, heartbeat, mgmt, preload_parcels, kts, kms, restart_stale, teardown_ca, teardown_all, teardown_tls, teardown_cluster, infra, init, plat, run, validate_
+Current Tags: _verify_inventory, verify, full_cluster, default_cluster, verify_definition, custom_repo, verify_parcels, database, security, kerberos, tls, ha, os, users, jdk, mysql_connector, oracle_connector, fetch_ca, cm, license, autotls, prereqs, restart_agents, heartbeat, mgmt, preload_parcels, kts, kms, restart_stale, teardown_ca, teardown_all, teardown_tls, teardown_cluster, infra, init, plat, run, validate_
 
 With these tags, you can set your deployment to a given "runlevel" state:
 
