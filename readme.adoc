@@ -42,7 +42,7 @@ Get the latest version of **Docker**.
 
 ==== (Optional) Install Git
 
-NOTE: Git is required if you instend to clone the software for local editing, if you just wish to Run the automation tools you may skip this step.
+NOTE: Git is required if you intend to clone the software for local editing, if you just intend to Run the automation tools you may skip this step.
 
 There are excellent instructions for installing Git on all Operating Systems on the https://git-scm.com/book/en/v2/Getting-Started-Installing-Git[Git website]
 
