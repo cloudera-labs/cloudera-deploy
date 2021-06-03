@@ -1,6 +1,6 @@
 = Cloudera Deploy
 cloudera-labs@cloudera.com
-0.3, 2021-05-21: Quickstart
+v1.1.2
 :page-layout: docs
 :description: Cloudera Deploy Documentation
 :imagesdir: ./images
