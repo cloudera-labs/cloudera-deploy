@@ -40,6 +40,12 @@ Get the latest version of **Docker**.
 * https://docs.docker.com/docker-for-mac/install/[For Macs]
 * Linux users, use your package manager.
 
+==== (Optional) Install Git
+
+NOTE: Git is required if you intend to clone the software for local editing, if you just intend to Run the automation tools you may skip this step.
+
+There are excellent instructions for installing Git on all Operating Systems on the https://git-scm.com/book/en/v2/Getting-Started-Installing-Git[Git website]
+
 ==== (Optional) Install AWS CLI
 
 Get the latest version of the **AWS CLI**.
@@ -90,13 +96,23 @@ TIP: Put AWS CLI and CDP CLI programs in your `$PATH` to make these two programs
 
 === Setup
 
-==== Clone the repository
+==== Option 1: Download the Quickstart script
 
-Clone this, i.e. the `cloudera-deploy`, repository.
+The `quickstart.sh` script will setup the Docker container with the software dependencies you need for deployment.
+
+[source, bash]
+----
+curl https://raw.githubusercontent.com/cloudera-labs/cloudera-deploy/main/quickstart.sh -o quickstart.sh
+----
+
+==== Option 2: Clone the repository
+
+Clone this, i.e. the `cloudera-deploy`, repository, which contains the `quickstart.sh` script.
 
 [source, bash]
 ----
 git clone https://github.com/cloudera-labs/cloudera-deploy.git
+cd cloudera-deploy
 ----
 
 WARNING: Be careful to not modify any of the files in the project as a user of the software. The vast majority of changes are managed through configurations provided to these project files.
@@ -115,14 +131,14 @@ Run the `quickstart.sh` entrypoint script. This script will prepare and execute 
 
 [source, bash]
 ----
-cd cloudera-deploy
 chmod +x quickstart.sh
 ./quickstart.sh
 ----
 
 ==== Confirm the Quickstart environment
 
-Confirm that you have the orange _cldr_ prompt. This is your interactive Ansible Runner environment and provides builtin access to the relevant dependencies for CDP.
+Confirm that you have the orange `cldr (build)-(version) #>` prompt.  +
+This is your interactive Ansible Runner environment and provides builtin access to the relevant dependencies for CDP.
 
 IMPORTANT: Do _NOT_ run the example definition until you have made the changes below.
 
@@ -149,9 +165,57 @@ WARNING: Please ensure you provide a valid region for the `infra_type` property.
 
 === Execution
 
+==== Check your Credentials
+
+Before running a Deployment, it is good practice to check that the credentials available to the Automation software are functioning correctly and _match the expected accounts_ - generally it is good practice to compare the user and account IDs produced in the terminal match those found in the Browser UI.
+
+===== CDP
+
+If you are deploying CDP Public, check your credential is available in your profile
+
+[source, bash]
+----
+cdp iam get-user
+----
+
+TIP: If you do not yet have a CDP Public credential, follow the Cloudera Documentation https://docs.cloudera.com/cdp/latest/cli/topics/mc-cli-generating-an-api-access-key.html[here]
+
+===== AWS
+
+If you are using AWS cloud infrastructure, check your credential is available in your profile
+
+[source, bash]
+----
+aws iam get-user
+----
+
+===== Azure
+
+If you are using Azure cloud infrastructure, check you are logged into your account and your credentials are available
+
+[source, bash]
+----
+az account list
+----
+
+TIP: If you cannot list your Azure accounts, consider using `az login` to refresh your credential
+
+===== GCP
+
+If you are using GCP cloud infrastructure, check your service account credential is being picked up.
+
+WARNING: You need a provisioning Service Account for GCP setup in your `cloudera-deploy` user profile 'gcloud_credential_file' entry. If you do not yet have a Provisioning Service Account you can follow this process in the https://docs.cloudera.com/cdp/latest/gcp-quickstart/topics/mc-gcp-quickstart-step1.html[CDP Documentation] to generate one.
+
+[source, bash]
+----
+gcloud auth list
+----
+
 ==== Run the main playbook
 
 Run the main playbook with the defaults and your configuration at the orange _cldr_ prompt.
+
+NOTE: This will create a ' CDP sandbox', which is both a CDP Public Environment and CDP Private Base cluster using your default Cloud Infrastructure Provider credentials. Many other deployments are possible and explained elsewhere.
 
 [source, bash]
 ----
@@ -170,25 +234,57 @@ tail -100f $HOME/.config/cloudera-deploy/log/latest-2021-05-08_150448
 
 IMPORTANT: The total time to deploy varies from 90 to 150 minutes, depending on CDN, network connectivity, etc. Keep checking the logs; if there are no errors, the scripts are working in the background.
 
+=== Upgrade
+
+Cloudera-Deploy is regularly updated by the maintainers with new features and fixes.  +
+The `quickstart.sh` script will check for an updated Container image to use if there is currently no Container running. +
+You may use the following process to trigger this behavior.
+
+WARNING: This will close any active `cldr` sessions you may have running.
+
+Stop the cloudera-deploy Docker Container
+[source, bash]
+----
+docker stop cloudera-deploy
+----
+
+WARNING: If you have made local uncommitted changes to cloudera-deploy, you must resolve them before updating
+
+In the cloudera-deploy directory, pull the latest changes with git
+
+[source, bash]
+----
+git pull
+----
+
+Finally, rerun the quickstart to download the latest image.
+
+TIP: You can stop the Docker Container and rerun the quickstart at any time to download the latest image
+
+[source, bash]
+----
+./quickstart.sh
+----
+
 == Project Details
 
 CAUTION: Don't change the project configuration without getting comfortable with the *quickstart* a few times.
 
 NOTE: Below pages will be migrated to Github pages shortly.
 
-Cloudera Deploy is powered by https://github.com/ansible/ansible[Ansible] and provides a standard configuration and execution model for CDP deployments and their applications. It can be run within a container or directly on a host.
+Cloudera Deploy is powered by https://github.com/ansible/ansible[Ansible] and provides a standard configuration and execution model for CDP deployments and their applications. It can be run within a container, or directly on a host.
 
 Specifically, Cloudera Deploy is an Ansible project that uses a set of playbooks, roles, and tags to construct a runlevel-like management experience for cloud and cluster deployments. It leverages several collections, both Cloudera and third-party.
 
 === Software Dependencies
 
-Cloudera Deploy requires a number of host applications, services, and Python libraries for its execution. These dependencies are already packaged for ease-of-use in https://github.com/cloudera-labs/cldr-runner[Cloudera Labs Ansible-Runner], another project within Cloudera Labs.
+Cloudera Deploy requires a number of host applications, services, and Python libraries for its execution. These dependencies are already packaged for ease-of-use in https://github.com/cloudera-labs/cldr-runner[Cloudera Labs Ansible-Runner], another project within Cloudera Labs, and are made readily accessible through the `quickstart.sh` script.
 
 Alternatively, and especially if you plan on running Cloudera Deploy in your own environment, you may install the dependencies yourself. 
 
 ==== Collections and Roles
 
-Cloudera Deploy relies on a number of Ansible collections:
+Cloudera Deploy relies directly on a number of Ansible collections:
 
 - https://github.com/cloudera-labs/cloudera.exe[`cloudera.exe`]
 - https://github.com/cloudera-labs/cloudera.cluster[`cloudera.cluster`]
@@ -229,7 +325,7 @@ The dependencies cover the full range of the automation tooling, from infrastruc
 
 === User Input Dependencies
 
-Cloudera Deploy does require a small set of user-supplied information for a successful deployment. A minimum set of user inputs is defined in a _profile_ file (see the link:profile.yml[profile.yml] template for details). For example, the `profile.yml` should define your password for the Administrator account of the deployed services.
+Cloudera Deploy does require a small set of user-supplied information for a successful deployment. A minimum set of user inputs is defined in a _profile_ file (see the link:profile.yml[profile.yml] template for details). For example, the `profile.yml` should define your password for the Administrator account of the deployed services, and you should set a unique `name_prefix` to avoid clashing with other deployments.
 
 The default location for profiles is `~/.config/cloudera-deploy/profiles/`. Cloudera Deploy looks for the `default` file in this directory unless the Ansible runtime variable `profile` is set, e.g. `-e profile=my_custom_profile`. Creating additional profiles is simple, and you can use the `profile.yml` template as your starting point.
 
@@ -282,11 +378,11 @@ ansible-playbook <location of cloudera-deploy>/main.yml \
   -e "definition_path=<absolute or relative directory to main.yml>"
 ----
 
-NOTE: The location defined by `definition_path` is relative _to the location of the `main.yml` playbook_ and can also be an absolute location.
+NOTE: The location defined by `definition_path` is relative _to the location of the `main.yml` playbook_, and can also be an absolute location.
 
 === Tags
 
-Cloudera Deploy exposes a set of tags that allows fine-grained inclusion and exclusion of functions, in particular, a runlevel-like management process.
+Cloudera Deploy exposes a set of Ansible tags that allows fine-grained inclusion and exclusion of functions, in particular, a runlevel-like management process.
 
 .Partial List of Available Execution Tags
 [cols="1,1"]
@@ -322,7 +418,9 @@ or select or skip a level or function:
 ansible-playbook main.yml -e "definition_path=my_example" -t run --skip-tags infra
 ----
 
-For details on the various _runlevel_-like tags for CDP Public Cloud, see the https://github.com/cloudera-labs/cloudera.exe/docs/runlevels.md[Runlevel Guide] in the `cloudera.exe` project.
+WARNING: Setting a deployment to a lower runlevel, e.g. from `run` to `infra` will teardown deployed components in the higher runlevels.
+
+For further details on the various _runlevel_-like tags for CDP Public Cloud, see the https://github.com/cloudera-labs/cloudera.exe/docs/runlevels.md[Runlevel Guide] in the `cloudera.exe` project.
 
 == Definitions
 
