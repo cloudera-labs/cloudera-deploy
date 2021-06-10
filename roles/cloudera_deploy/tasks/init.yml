@@ -302,6 +302,10 @@
     - name: Remove Dynamic Inventory Template from current inventory
       include_tasks: refresh_inventory.yml
 
+- name: Set Cloudera Manager License file
+  ansible.builtin.set_fact:
+    cloudera_manager_license_file: "{{ globals.cloudera_license_file | default(omit) }}"
+
 # Download Mirror
 - name: Prepare for Download Mirror Population if requested and necessary
   when:

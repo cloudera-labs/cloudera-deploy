@@ -31,7 +31,6 @@
   ansible.builtin.set_fact:
     __init_parcel_repos: "{{ init__preparse_repo_listing | reject('search', 'tar.gz') | default([]) }}"
     __init_tarball_links: "{{ init__preparse_repo_listing | select('search', 'tar.gz') | default([]) }}"
-    cloudera_manager_license_file: "{{ globals.cloudera_license_file | default(omit) }}"
 
 # This sets 'manifests' on the calling host, and provides the repo login details
 - name: Get Parcel Manifests
