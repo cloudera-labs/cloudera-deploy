@@ -342,7 +342,7 @@
     - full_cluster
 
 - name: Configure Cloudera Manager server
-  hosts: localhost
+  hosts: cloudera_manager
   gather_facts: no
   roles:
     - cloudera.cluster.cloudera_manager.config
