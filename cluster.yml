@@ -328,6 +328,7 @@
       when: tls | default(False) or manual_tls_cert_distribution | default(False)
   tags:
     - tls
+    - cm
     - full_cluster
 
 - name: Configure Cloudera Manager agents
