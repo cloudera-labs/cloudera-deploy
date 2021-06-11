@@ -274,7 +274,6 @@
         quiet: yes
         that:
           - groups.cluster is defined
-          - groups.cloudera_manager is defined
         fail_msg: "Parsed Inventory Template did not contain minimum expected groups for a Cloudera Cluster deployment"
 
     - name: Check a custom_repo is part of the cluster definition if using Download Mirror
@@ -302,9 +301,19 @@
     - name: Remove Dynamic Inventory Template from current inventory
       include_tasks: refresh_inventory.yml
 
-- name: Set Cloudera Manager License file
+- name: Add no_log variables to globals
+  no_log: true
+  ansible.builtin.set_fact:
+    globals: "{{ globals | default({}) | combine(__no_log_globals, recursive=True) }}"
+  vars:
+    __no_log_globals:
+      admin_password: "{{ admin_password | mandatory }}"
+
+- name: Set CM facts
   ansible.builtin.set_fact:
     cloudera_manager_license_file: "{{ globals.cloudera_license_file | default(omit) }}"
+    cloudera_manager_admin_password: "{{ globals.admin_password }}"
+  no_log: true
 
 # Download Mirror
 - name: Prepare for Download Mirror Population if requested and necessary
@@ -359,10 +368,3 @@
       Admin Password must comply with CDP Public requirements: 1 Upper, 1 Special, 1 Number, 8-64 chars.
     quiet: yes
 
-- name: Add no_log variables to globals at end of init
-  no_log: true
-  ansible.builtin.set_fact:
-    globals: "{{ globals | default({}) | combine(__no_log_globals, recursive=True) }}"
-  vars:
-    __no_log_globals:
-      admin_password: "{{ admin_password | mandatory }}"
