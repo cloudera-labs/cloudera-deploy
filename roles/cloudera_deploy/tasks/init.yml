@@ -233,7 +233,7 @@
         globals: "{{ globals | default({}) | combine(__generated_keypair, recursive=True) }}"
       vars:
         __generated_keypair:
-          ssh:      
+          ssh:
             private_key_file: "{{ __generated_ssh_keys.filename }}"
             public_key_file: "{{ [ __generated_ssh_keys.filename, 'pub' ] | join('.') }}"
 
@@ -274,6 +274,7 @@
         quiet: yes
         that:
           - groups.cluster is defined
+          - groups.cloudera_manager is defined
         fail_msg: "Parsed Inventory Template did not contain minimum expected groups for a Cloudera Cluster deployment"
 
     - name: Check a custom_repo is part of the cluster definition if using Download Mirror
