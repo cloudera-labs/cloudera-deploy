@@ -318,6 +318,7 @@
   tags:
     - cm
     - default_cluster
+    - full_cluster
 
 - name: Configure Cloudera Manager server for TLS
   hosts: cloudera_manager
