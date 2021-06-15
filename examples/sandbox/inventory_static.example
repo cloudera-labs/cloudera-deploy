@@ -13,15 +13,15 @@
 # limitations under the License.
 
 [cloudera_manager]
-ip-10-10-1-19.eu-west-1.compute.internal
+ip-10-10-11-191.eu-west-1.compute.internal ansible_host=52.211.97.38 ansible_user=centos ansible_ssh_private_key_file=~/.ssh/mykey.pem
 
 [cluster_master_nodes]
-ip-10-10-1-19.eu-west-1.compute.internal host_template=Master1
+ip-10-10-11-191.eu-west-1.compute.internal ansible_host=52.211.97.38 ansible_user=centos ansible_ssh_private_key_file=~/.ssh/mykey.pem host_template=Master1
 
 [cluster_worker_nodes]
-ip-10-10-28-171.eu-west-1.compute.internal
-ip-10-10-29-99.eu-west-1.compute.internal
-ip-10-10-14-121.eu-west-1.compute.internal
+ip-10-10-2-62.eu-west-1.compute.internal ansible_host=63.35.213.171 ansible_user=centos ansible_ssh_private_key_file=~/.ssh/mykey.pem
+ip-10-10-15-242.eu-west-1.compute.internal ansible_host=34.245.231.13 ansible_user=centos ansible_ssh_private_key_file=~/.ssh/mykey.pem
+ip-10-10-12-158.eu-west-1.compute.internal ansible_host=3.249.133.103 ansible_user=centos ansible_ssh_private_key_file=~/.ssh/mykey.pem
 
 [cluster_worker_nodes:vars]
 host_template=Workers
@@ -31,14 +31,11 @@ cluster_master_nodes
 cluster_worker_nodes
 
 [db_server]
-ip-10-10-1-19.eu-west-1.compute.internal
+ip-10-10-11-191.eu-west-1.compute.internal ansible_host=52.211.97.38 ansible_user=centos ansible_ssh_private_key_file=~/.ssh/mykey.pem
+
+[custom_repo]
+ip-10-10-11-191.eu-west-1.compute.internal ansible_host=52.211.97.38 ansible_user=centos ansible_ssh_private_key_file=~/.ssh/mykey.pem
 
 [deployment:children]
 cluster
-db_server
-
-[deployment:vars]
-# Ansible will defer to the running SSH Agent for relevant keys
-# Set the following to hardcode the SSH private key for the instances
-# ansible_ssh_private_key_file=~/.ssh/mykey.pem  
-ansible_user=centos
+cloudera_manager
