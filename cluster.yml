@@ -442,7 +442,7 @@
     - full_cluster
 
 - name: Deploy Cloudera Management Service
-  hosts: localhost
+  hosts: cloudera_manager
   gather_facts: no
   roles:
     - cloudera.cluster.deployment.services.mgmt
