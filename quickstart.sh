@@ -68,8 +68,8 @@ if pgrep -x "ssh-agent" >/dev/null
 then
     echo "ssh-agent OK"
 else
-    echo "ssh-agent is stopped, restarting"
-    eval `ssh-agent -s` 
+    echo "ssh-agent is stopped, please start it by running: eval `ssh-agent -s` "
+    #eval `ssh-agent -s` 
 fi
 
 echo "Checking OS"
