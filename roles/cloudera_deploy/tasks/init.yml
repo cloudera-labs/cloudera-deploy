@@ -357,8 +357,8 @@
 
 - name: Determine if Cloud Roles should be called
   ansible.builtin.set_fact:
-    init__call_cloud_role: "{{ infra is defined or env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined | default(False) }}"
-    init__call_cdp_public: "{{ env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined | default(False) }}"
+    init__call_cloud_role: "{{ infra is defined or env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined or df is defined | default(False) }}"
+    init__call_cdp_public: "{{ env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined or df is defined | default(False) }}"
 
 - name: Check Admin Password is CDP Public compliant when calling CDP Public
   when: init__call_cdp_public | bool
