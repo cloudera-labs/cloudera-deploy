@@ -302,7 +302,7 @@ Cloudera Deploy does have a single dependency for its own execution, the https:/
 [source, bash]
 ----
 # Get the cldr-runner dependency file first
-curl https://github.com/cloudera-labs/cldr-runner/tree/main/payload/deps/ansible.yml \
+curl https://raw.githubusercontent.com/cloudera-labs/cldr-runner/main/payload/deps/ansible.yml \
     --output requirements.yml
 
 # Install the collections (and their dependencies)
