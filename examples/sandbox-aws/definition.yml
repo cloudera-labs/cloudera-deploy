@@ -93,7 +93,7 @@ datahub:
 #Operational Database Configurations
 ################################################################################
 opdb:
-  name: chpe-od #Override OpDB name - default is <name_prefix>-od
+  name: chpe-od-2 #Override OpDB name - default is <name_prefix>-od
 ################################################################################
 #Machine Learning Configurations
 ################################################################################
@@ -145,17 +145,30 @@ ml:
       monitoring: yes
       public_loadbalancer: yes
       #Override the default workspace name - default is <name_prefix>-wksp
-      name: "my-cml-workspace"
+      name: "my-cml-space"
       storage: yes
-      #List of IP CIDRs to whitelist for public load balancers AND k8s management API
-      ip_addresses: 
-        - "108.5.26.129/32"
       instance_groups:
         - name: cpu_settings
           instanceType: "m5.4xlarge"
           instanceCount: 1
           rootVolume:
             size: 100
+          autoscaling:
+            minInstances: 1
+            maxInstances: 5
+            enabled: true
+        - name: gpu_settings
+          instanceCount: 0
+          instanceType: "p2.8xlarge"
+          rootVolume:
+            size: 100
+          autoscaling:
+            minInstances: 0
+            maxInstances: 2
+            enabled: true
+      #List of IP CIDRs to whitelist for public load balancers AND k8s management API
+      ip_addresses: 
+        - "108.5.26.129/32"
 ################################################################################
 #Data Warehouse Configurations
 ################################################################################
