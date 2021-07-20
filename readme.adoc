@@ -266,6 +266,27 @@ TIP: You can stop the Docker Container and rerun the quickstart at any time to d
 ./quickstart.sh
 ----
 
+=== Support Matrix
+✓ - Supported
+
+O - Support in CDP, but not yet in Cloudera-Deploy
+
+X - Not Supported in CDP
+
+[width="80%",cols="4,1,1,1"options="header"]
+|========================================================
+|Experience |AWS |Azure |GCP
+|Environment (Light Duty) |✓ | ✓ | ✓
+|Environment (Medium Duty) |X | X | X
+|Data Lake (Light Duty) |✓ | ✓ | ✓
+|Data Lake (Medium Duty) |X | X | X
+|Data Hub|✓ |✓ |✓
+|Data Warehouse|✓ |O |X
+|Data Engineering|O |O |X
+|Data Flow|✓ |X |X
+|Machine Learning|✓ |✓ |X
+|========================================================
+
 == Project Details
 
 CAUTION: Don't change the project configuration without getting comfortable with the *quickstart* a few times.
