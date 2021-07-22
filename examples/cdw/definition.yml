@@ -19,8 +19,7 @@ dw:
   private_load_balancer: no
   private_worker_nodes: yes
   definitions:
-    - use_default_dbc: yes
-      virtual_warehouses:
+    - virtual_warehouses:
         - vw_type: "hive"
           template: "xsmall"
           autoscaling:
