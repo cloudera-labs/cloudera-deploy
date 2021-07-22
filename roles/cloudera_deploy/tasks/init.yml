@@ -157,6 +157,13 @@
   ansible.builtin.include_vars:
     file: "{{ init__cluster_definition_file }}"
 
+- name: If Purge is defined, check it is boolean
+  when: purge is defined
+  ansible.builtin.assert:
+    that: purge is sameas true or purge is sameas false
+    fail_msg: "purge key is present in definition, but not a boolean as expected"
+    quiet: yes
+
 # Merge User Profile to Globals
 - name: Marshal User Config into Globals
   ansible.builtin.set_fact:
@@ -390,11 +397,4 @@
       - admin_password is match('^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,64}$')
     fail_msg: >-
       Admin Password must comply with CDP Public requirements: 1 Upper, 1 Special, 1 Number, 8-64 chars.
-    quiet: yes
-
-- name: If Purge is defined, check it is boolean
-  when: purge is defined
-  ansible.builtin.assert:
-    that: purge is sameas true or purge is sameas false
-    fail_msg: "purge key is present in definition, but not a boolean as expected"
     quiet: yes
