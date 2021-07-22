@@ -266,27 +266,6 @@ TIP: You can stop the Docker Container and rerun the quickstart at any time to d
 ./quickstart.sh
 ----
 
-=== Support Matrix
-✓ - Supported
-
-O - Support in CDP, but not yet in Cloudera-Deploy
-
-X - Not Supported in CDP
-
-[width="80%",cols="4,1,1,1"options="header"]
-|========================================================
-|Experience |AWS |Azure |GCP
-|Environment (Light Duty) |✓ | ✓ | ✓
-|Environment (Medium Duty) |X | X | X
-|Data Lake (Light Duty) |✓ | ✓ | ✓
-|Data Lake (Medium Duty) |X | X | X
-|Data Hub|✓ |✓ |✓
-|Data Warehouse|✓ |O |X
-|Data Engineering|O |O |X
-|Data Flow|✓ |X |X
-|Machine Learning|✓ |✓ |X
-|========================================================
-
 == Project Details
 
 CAUTION: Don't change the project configuration without getting comfortable with the *quickstart* a few times.
@@ -367,6 +346,28 @@ We suggest you set your default `infra_type` in `profile.yml` to match your pref
 For CDP Private Cloud you will need a valid Cloudera license file in order to download the software from the Cloudera repositories. We suggest this is stored in your user profile in `~/.cdp/` and set in the `profile.yml` config file.
 
 If you are also using Public Cloud infrastructure to host your CDP Private Cloud clusters, then you will need those credentials as well.
+
+=== Support Matrix
+✓ - Supported
+
+O - Support in CDP, but not in Cloudera-Deploy
+
+X - Not Supported in CDP
+
+[width="80%",cols="4,1,1,1"options="header"]
+|========================================================
+|Experience |AWS |Azure |GCP
+|Environment (Light Duty) |✓ | ✓ | ✓
+|Environment (Medium Duty) |X | X | X
+|Data Lake (Light Duty) |✓ | ✓ | ✓
+|Data Lake (Medium Duty) |X | X | X
+|Data Hub|✓ |✓ |✓
+|Data Warehouse|✓ |O |X
+|Data Engineering|O |O |X
+|Data Flow|✓ |X |X
+|Machine Learning|✓ |✓ |X
+|========================================================
+
 
 == SSH Host Key Checking
 
