@@ -302,7 +302,7 @@ Cloudera Deploy does have a single dependency for its own execution, the https:/
 [source, bash]
 ----
 # Get the cldr-runner dependency file first
-curl https://github.com/cloudera-labs/cldr-runner/tree/main/payload/deps/ansible.yml \
+curl https://raw.githubusercontent.com/cloudera-labs/cldr-runner/main/payload/deps/ansible.yml \
     --output requirements.yml
 
 # Install the collections (and their dependencies)
@@ -346,6 +346,28 @@ We suggest you set your default `infra_type` in `profile.yml` to match your pref
 For CDP Private Cloud you will need a valid Cloudera license file in order to download the software from the Cloudera repositories. We suggest this is stored in your user profile in `~/.cdp/` and set in the `profile.yml` config file.
 
 If you are also using Public Cloud infrastructure to host your CDP Private Cloud clusters, then you will need those credentials as well.
+
+=== Support Matrix
+✓ - Supported
+
+O - Support in CDP, but not in Cloudera-Deploy
+
+X - Not Supported in CDP
+
+[width="80%",cols="4,1,1,1"options="header"]
+|========================================================
+|Experience |AWS |Azure |GCP
+|Environment (Light Duty) |✓ | ✓ | ✓
+|Environment (Medium Duty) |O | O |O
+|Data Lake (Light Duty) |✓ | ✓ | ✓
+|Data Lake (Medium Duty) |O |O |O
+|Data Hub|✓ |✓ |✓
+|Data Warehouse|✓ |O |X
+|Data Engineering|O |O |X
+|Data Flow|✓ |X |X
+|Machine Learning|✓ |✓ |X
+|========================================================
+
 
 == SSH Host Key Checking
 
