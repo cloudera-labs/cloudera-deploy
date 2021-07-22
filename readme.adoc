@@ -358,7 +358,7 @@ X - Not Supported in CDP
 |========================================================
 |Experience |AWS |Azure |GCP
 |Environment (Light Duty) |✓ | ✓ | ✓
-|Environment (Medium Duty) |X | X | X
+|Environment (Medium Duty) |O | O |O
 |Data Lake (Light Duty) |✓ | ✓ | ✓
 |Data Lake (Medium Duty) |X | X | X
 |Data Hub|✓ |✓ |✓
