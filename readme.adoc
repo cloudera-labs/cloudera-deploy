@@ -360,7 +360,7 @@ X - Not Supported in CDP
 |Environment (Light Duty) |✓ | ✓ | ✓
 |Environment (Medium Duty) |O | O |O
 |Data Lake (Light Duty) |✓ | ✓ | ✓
-|Data Lake (Medium Duty) |X | X | X
+|Data Lake (Medium Duty) |O |O |O
 |Data Hub|✓ |✓ |✓
 |Data Warehouse|✓ |O |X
 |Data Engineering|O |O |X
