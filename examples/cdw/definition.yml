@@ -20,8 +20,8 @@ dw:
   private_worker_nodes: yes
   definitions:
     - virtual_warehouses:
-        - vw_type: "hive"
-          template: "xsmall"
-          autoscaling:
-            min_cluster: 2
-            max_cluster: 6
+      - type: "hive"
+        template: "xsmall"
+        autoscaling:
+          min_nodes: 2
+          max_nodes: 6
