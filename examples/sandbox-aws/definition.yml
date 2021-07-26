@@ -4,7 +4,7 @@
 #These will take precedence over those set in your profile
 ###############################################################################
 name_prefix: chpe #name prefix for everything, infra, plat, and run
-region: us-east-1 #CSP region for infra
+infra_region: us-east-1 #CSP region for infra
 infra_type: aws #CSP
 cdp_profile: default #CDP Profile to use
 aws_profile: default #AWS Profile to use
@@ -93,7 +93,9 @@ datahub:
 #Operational Database Configurations
 ################################################################################
 opdb:
-  name: chpe-od-2 #Override OpDB name - default is <name_prefix>-od
+  definitions: 
+    - name: chpe-od #Override OpDB name - default is <name_prefix>-od
+    - name: chpe-od-2 #Override OpDB name - default is <name_prefix>-od
 ################################################################################
 #Machine Learning Configurations
 ################################################################################
@@ -140,6 +142,10 @@ ml:
             minInstances: 0
             maxInstances: 2
             enabled: true
+          #List of IP CIDRs to whitelist for public load balancers AND k8s management API
+      ip_addresses: 
+        - "108.5.26.129/32"
+        - "1.2.3.4/32"
     #Workspace Number 2
     - tls: yes
       monitoring: yes
@@ -166,10 +172,25 @@ ml:
             minInstances: 0
             maxInstances: 2
             enabled: true
-      #List of IP CIDRs to whitelist for public load balancers AND k8s management API
       ip_addresses: 
         - "108.5.26.129/32"
+        - "1.2.3.4/32"
 ################################################################################
 #Data Warehouse Configurations
 ################################################################################
 dw: #No current configs can be set here (yet)
+################################################################################
+#Data Flow Configurations
+################################################################################
+df:
+  min_k8s_nodes: 3 #Minumum number of k8s nodes for autoscaling
+  max_k8s_nodes: 5 #Minumum number of k8s nodes for autoscaling
+  #Enable a public-facing load balancer? Applicable for L0/L1 networks
+  public_loadbalancer: true
+  #List of IP CIDRs to whitelist for public load balancers AND k8s management API
+  ip_ranges:
+    - "108.5.26.129/32"
+    - "1.2.3.4/32"
+  #Whether to remove/delete experience storage upon termination
+  teardown:
+    persist: false
