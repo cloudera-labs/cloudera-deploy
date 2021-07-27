@@ -366,10 +366,7 @@ X - Not Supported in CDP
 |Data Engineering|O |O |X
 |Data Flow|✓ |X |X
 |Machine Learning|✓ |✓ |X
-<<<<<<< HEAD
 |Operational Database|✓ |✓ |X
-=======
->>>>>>> c73982f... Readme update (#47)
 |========================================================
 
 
