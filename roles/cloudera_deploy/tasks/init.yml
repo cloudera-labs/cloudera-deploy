@@ -157,6 +157,13 @@
   ansible.builtin.include_vars:
     file: "{{ init__cluster_definition_file }}"
 
+- name: If Purge is defined, check it is boolean
+  when: purge is defined
+  ansible.builtin.assert:
+    that: purge is sameas true or purge is sameas false
+    fail_msg: "purge key is present in definition, but not a boolean as expected"
+    quiet: yes
+
 # Merge User Profile to Globals
 - name: Marshal User Config into Globals
   ansible.builtin.set_fact:
@@ -175,6 +182,9 @@
         key_path: "{{ ssh_key_path | default(default_sshkey_path) }}"
       cloudera_license_file: "{{ license_file | default(omit) }}"
       gcloud_credential_file: "{{ gcloud_credential_file | default(omit) }}"
+      cdp_profile: "{{ cdp_profile | default(omit) }}"
+      aws_profile: "{{ aws_profile | default(omit) }}"
+      force_teardown: "{{ purge | default(omit) }}"
       env_vars: "{{ env_vars | default(omit) }}"
 
 - name: Merge overwrite globals from Definition file with Globals on User File
@@ -389,4 +399,3 @@
     fail_msg: >-
       Admin Password must comply with CDP Public requirements: 1 Upper, 1 Special, 1 Number, 8-64 chars.
     quiet: yes
-
