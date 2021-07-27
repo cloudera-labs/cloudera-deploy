@@ -63,6 +63,15 @@ fi
 echo "Mounting ${PROJECT_DIR} to container as Project Directory /runner/project"
 echo "Creating Container ${CONTAINER_NAME} from image ${IMAGE_FULL_NAME}"
 
+echo "Checking if ssh-agent is running..."
+if pgrep -x "ssh-agent" >/dev/null
+then
+    echo "ssh-agent OK"
+else
+    echo "ssh-agent is stopped, please start it by running: eval `ssh-agent -s` "
+    #eval `ssh-agent -s` 
+fi
+
 echo "Checking OS"
 if [ ! -f "/run/host-services/ssh-auth.sock" ]; 
 then
