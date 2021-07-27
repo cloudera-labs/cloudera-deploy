@@ -184,6 +184,7 @@
       gcloud_credential_file: "{{ gcloud_credential_file | default(omit) }}"
       cdp_profile: "{{ cdp_profile | default(omit) }}"
       aws_profile: "{{ aws_profile | default(omit) }}"
+      force_teardown: "{{ purge | default(omit) }}"
       env_vars: "{{ env_vars | default(omit) }}"
 
 - name: Merge overwrite globals from Definition file with Globals on User File
