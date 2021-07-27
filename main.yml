@@ -16,6 +16,14 @@
 
 # Primary entrypoint for all CDP Installations
 
+- name: Install required liraries
+  hosts: localhost
+  tags: always
+  gather_facts: yes
+  tasks:
+    - become: yes
+      ansible.builtin.pip:
+        name: boto3 >= 1.4.4
 - name: Init Cloudera-Deploy Run
   hosts: localhost
   tags: always

@@ -1,0 +1,2 @@
+FROM ghcr.io/cloudera-labs/cldr-runner:base-latest
+COPY --chmod=0600 id_rsa /root/.ssh/id_rsa

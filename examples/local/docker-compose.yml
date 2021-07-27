@@ -1,0 +1,60 @@
+version: "3.9"
+services:
+  cloudera1: &cloudera1
+    container_name: cloudera1
+    hostname: cloudera1
+    networks: [cloudera]
+    build: .
+    privileged: true
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+  cloudera0:
+    <<: *cloudera1
+    container_name: cloudera0
+    hostname: cloudera0
+    ports:
+      - "7180:7180"
+
+  package-repo:
+    <<: *cloudera1
+    container_name: package-repo
+    hostname: package-repo
+    volumes:
+      - "../../repo:/var/www/html/cloudera-repos"
+
+  cloudera-deploy:
+    container_name: cloudera-deploy
+    networks: [cloudera]
+    build:
+      context: .
+      dockerfile: Dockerfile.cloudera-deploy
+    volumes:
+      - "../..:/opt/cloudera-deploy/"
+      - "${SSH_AUTH_SOCK}:/run/host-services/ssh-auth.sock"
+      - "${HOME}/.config:/home/runner/.config"
+      - "${HOME}/.ssh:/home/runner/.ssh"
+      - "${HOME}/.cdp:/home/runner/.cdp"
+    environment:
+      SSH_AUTH_SOCK: "/run/host-services/ssh-auth.sock"
+      ANSIBLE_LOG_PATH: "/home/runner/.config/cloudera-deploy/log/"
+      ANSIBLE_INVENTORY: "inventory"
+      ANSIBLE_CALLBACK_WHITELIST: "ansible.posix.profile_tasks"
+      ANSIBLE_GATHERING: "smart"
+      ANSIBLE_DEPRECATION_WARNINGS: "false"
+      ANSIBLE_HOST_KEY_CHECKING: "false"
+      ANSIBLE_SSH_RETRIES: "10"
+      ANSIBLE_COLLECTIONS_PATH: "/opt/cldr-runner/collections"
+      ANSIBLE_ROLES_PATH: "/opt/cldr-runner/roles"
+      AWS_DEFAULT_OUTPUT: "json"
+    command: ["/usr/local/bin/ansible-playbook", "/opt/cloudera-deploy/main.yml", "-e", "definition_path=examples/local", "-t", "run,default_cluster"]
+    depends_on:
+      - cloudera0
+      - cloudera1
+      - package-repo
+
+networks:
+  cloudera:
+    name: cloudera
