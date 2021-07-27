@@ -184,7 +184,9 @@
 
 # Validate Name Prefix
 - name: Check supplied Namespace (Azure)
-  when: globals.infra_type == 'azure'
+  when:
+    - globals.infra_type == 'azure'
+    - "'teardown' not in {{ ansible_run_tags }}"
   ansible.builtin.assert:
     that:
       - globals.name_prefix | length > 1
@@ -194,7 +196,9 @@
     quiet: yes
 
 - name: Check supplied Namespace
-  when: globals.infra_type != 'azure'
+  when:
+    - globals.infra_type != 'azure'
+    - "'teardown' not in {{ ansible_run_tags }}"
   ansible.builtin.assert:
     that:
       - globals.name_prefix | length > 1
@@ -245,6 +249,23 @@
     __public_key_globals:
       ssh:
         public_key_text: "{{ lookup('file', globals.ssh.public_key_file ) | default(omit) }}"
+
+- name: Validate SSH Private Key File has acceptable permissions
+  when: globals.ssh.private_key_file is defined
+  block:
+    - name: Get information for SSH Private Key File
+      ansible.builtin.stat:
+        path: "{{ globals.ssh.private_key_file }}"
+      register: __private_key_file_stat
+
+    - name: Assert that SSH Private Key has valid permissions
+      ansible.builtin.assert:
+        that:
+          - __private_key_file_stat.stat.mode == '0400' or __private_key_file_stat.stat.mode == '0600'
+        fail_msg:
+          - "SSH Private Key at {{ __private_key_file_stat.stat.path }} has invalid permissions"
+          - "Permissions are {{ __private_key_file_stat.stat.mode }}"
+          - "Permissions should be 0400 or 0600"
 
 # Read in Dynamic Inventory
 - name: Seek Inventory Template in Definition Path
@@ -357,8 +378,8 @@
 
 - name: Determine if Cloud Roles should be called
   ansible.builtin.set_fact:
-    init__call_cloud_role: "{{ infra is defined or env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined | default(False) }}"
-    init__call_cdp_public: "{{ env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined | default(False) }}"
+    init__call_cloud_role: "{{ infra is defined or env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined or df is defined | default(False) }}"
+    init__call_cdp_public: "{{ env is defined or ml is defined or de is defined or datahub is defined or opdb is defined or dw is defined or df is defined | default(False) }}"
 
 - name: Check Admin Password is CDP Public compliant when calling CDP Public
   when: init__call_cdp_public | bool
