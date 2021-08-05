@@ -83,30 +83,6 @@
   ansible.builtin.include_vars:
     file: "{{ __user_config_stat.stat.path }}"
 
-# Admin Password
-- name: Prompt User for a password if not provided in config or vault
-  when: admin_password is undefined or admin_password | length < 2
-  block:
-    - name: Prompt User for Password if not supplied
-      no_log: true
-      pause:
-        prompt: "No admin password found in profile.yml or extra_vars, or provided password too short; please provide a Password"
-      register: __user_input_password
-
-    - name: Set Admin password
-      no_log: true
-      ansible.builtin.set_fact:
-        admin_password: "{{ __user_input_password.user_input }}"
-
-- name: Assert user has supplied an Admin Password
-  no_log: true
-  ansible.builtin.assert:
-    quiet: yes
-    that:
-      - admin_password is defined
-      - admin_password | length > 2
-    fail_msg: "You must supply an Admin Password of at least 2 chars"
-
 # Handle Definition File
 - name: Seek Definition files in Definition Path
   register: __def_file_stat
@@ -163,6 +139,30 @@
     that: purge is sameas true or purge is sameas false
     fail_msg: "purge key is present in definition, but not a boolean as expected"
     quiet: yes
+
+# Admin Password
+- name: Prompt User for a password if not provided in config or vault
+  when: admin_password is undefined or admin_password | length < 2
+  block:
+    - name: Prompt User for Password if not supplied
+      no_log: true
+      pause:
+        prompt: "No admin password found in profile.yml or extra_vars, or provided password too short; please provide a Password"
+      register: __user_input_password
+
+    - name: Set Admin password
+      no_log: true
+      ansible.builtin.set_fact:
+        admin_password: "{{ __user_input_password.user_input }}"
+
+- name: Assert user has supplied an Admin Password
+  no_log: true
+  ansible.builtin.assert:
+    quiet: yes
+    that:
+      - admin_password is defined
+      - admin_password | length > 2
+    fail_msg: "You must supply an Admin Password of at least 2 chars"
 
 # Merge User Profile to Globals
 - name: Marshal User Config into Globals
