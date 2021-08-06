@@ -81,7 +81,12 @@
     - name: Prepare host for s3 actions
       become: yes
       ansible.builtin.pip:
-        name: boto3 >= 1.4.4
+        name: "{{ __pip_item }}"
+      loop_control:
+        loop_var: __pip_item
+      loop:
+        - futures
+        - boto3 >= 1.4.4
 
     - name: Sync downloaded Files paths to S3 cache bucket
       become: yes

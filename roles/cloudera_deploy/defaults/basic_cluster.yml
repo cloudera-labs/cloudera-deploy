@@ -14,13 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cloudera_manager_version: 7.1.4
+cloudera_manager_version: 7.4.4
 
 clusters:
   - name: Basic Cluster
     services: [HDFS, YARN, ZOOKEEPER]
     repositories:
-      - https://archive.cloudera.com/cdh7/7.1.4.0/parcels/
+      - https://archive.cloudera.com/cdh7/7.1.7.0/parcels/
     configs:
       HDFS:
         DATANODE:
