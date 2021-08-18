@@ -136,7 +136,7 @@
 - name: If Purge is defined, check it is boolean
   when: purge is defined
   ansible.builtin.assert:
-    that: purge is sameas true or purge is sameas false
+    that: purge|bool is sameas true or purge|bool is sameas false
     fail_msg: "purge key is present in definition, but not a boolean as expected"
     quiet: yes
 
