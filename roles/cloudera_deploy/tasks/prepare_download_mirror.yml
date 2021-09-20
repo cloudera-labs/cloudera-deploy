@@ -43,10 +43,11 @@
 - name: Extract Parcel URLs from Manifests
   ansible.builtin.set_fact:
     __parcel_urls: "{{ manifests.results | cloudera.cluster.extract_parcel_urls }}"
+    __parcel_distro_search_term: "{{ parcel_distro | default(default_parcel_distro) }}.parcel"
 
 - name: Filter Parcels by distro
   ansible.builtin.set_fact:
-    __filtered_parcel_urls: "{{ __parcel_urls | select('search', parcel_distro | default(default_parcel_distro)) | list }}"
+    __filtered_parcel_urls: "{{ __parcel_urls | select('search', __parcel_distro_search_term ) | list }}"
 
 - name: Prepare target Download Mirror listing with parcels and attendant files
   when: __filtered_parcel_urls | length > 0

@@ -66,7 +66,26 @@
   when: globals.infra_type == 'aws'
   block:
     # Prepare to sync cache dir to S3
-    - name: Prepare host for Python actions
+    - name: Setup System Rhel8
+      when:
+        - ansible_os_family == 'RedHat'
+        - ansible_distribution_major_version | int >= 8
+      become: yes
+      ansible.builtin.package:
+        lock_timeout: 180
+        name: "{{ __package_item }}"
+        update_cache: yes
+        state: present
+      loop_control:
+        loop_var: __package_item
+      loop:
+        - epel-release
+        - python3
+
+    - name: Setup system Rhel7
+      when:
+        - ansible_os_family == 'RedHat'
+        - ansible_distribution_major_version | int < 8
       become: yes
       ansible.builtin.package:
         name: "{{ __package_item }}"

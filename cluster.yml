@@ -441,6 +441,7 @@
       when: cloudera_manager_agent_wait_for_heartbeat | default(True)
   tags:
     - heartbeat
+    - default_cluster
     - full_cluster
 
 - name: Deploy Cloudera Management Service
