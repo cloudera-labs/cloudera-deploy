@@ -39,11 +39,12 @@
     public: yes
   vars:
     repositories: "{{ __init_parcel_repos }}"
+    cluster_os_distribution: "{{ init__parcel_distro }}"
 
 - name: Extract Parcel URLs from Manifests
   ansible.builtin.set_fact:
     __parcel_urls: "{{ manifests.results | cloudera.cluster.extract_parcel_urls }}"
-    __parcel_distro_search_term: "{{ parcel_distro | default(default_parcel_distro) }}.parcel"
+    __parcel_distro_search_term: "{{ init__parcel_distro }}.parcel"
 
 - name: Filter Parcels by distro
   ansible.builtin.set_fact:

@@ -277,6 +277,11 @@
           - "Permissions are {{ __private_key_file_stat.stat.mode }}"
           - "Permissions should be 0400 or 0600"
 
+# Parcel Distro
+- name: Determine preferred Parcel Distribution
+  ansible.builtin.set_fact:
+    init__parcel_distro: "{{ parcel_distro | default(default_parcel_distro) }}"
+
 # Read in Dynamic Inventory
 - name: Seek Inventory Template in Definition Path
   register: __di_template_stat
@@ -329,6 +334,7 @@
         - dynamic_inventory:
             vm:
               count: "{{ __dynamic_inventory_host_list | count }}"
+              os: "{{ init__parcel_distro }}"
   always:
     - name: Remove Dynamic Inventory Template from current inventory
       include_tasks: refresh_inventory.yml

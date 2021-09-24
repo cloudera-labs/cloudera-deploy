@@ -86,12 +86,26 @@
       ansible.builtin.set_fact:
         init__cluster_repo_entries: "{{ init__cluster_repo_entries | default([]) + [__cluster_repo_item | urlsplit('path') ] }}"
 
-    - name: Create list of Download Mirror URLs filtered to required repositories for run
+    - name: Create list of Download Mirror URLs filtered to required repositories and distros
       loop: "{{ init__cluster_repo_entries }}"
       loop_control:
         loop_var: __cluster_repo_path_item
       ansible.builtin.set_fact:
-        init__urls_to_sign: "{{ init__urls_to_sign | default([]) + __download_mirror_ini_entry | select('search', __cluster_repo_path_item) | list }}"
+        init__urls_to_sign: "{{ init__urls_to_sign
+          | default([]) + __download_mirror_ini_entry
+          | select('search', __cluster_repo_path_item)
+          | select('search', init__parcel_distro)
+          | list }}"
+
+    - name: Ensure manifest is included in Download Mirror URLs if present
+      loop: "{{ init__cluster_repo_entries }}"
+      loop_control:
+        loop_var: __cluster_repo_path_item
+      ansible.builtin.set_fact:
+        init__urls_to_sign: "{{ init__urls_to_sign
+            | default([]) + __download_mirror_ini_entry
+            | select('search', 'manifest.json')
+            | list }}"
 
 - name: Get AWS Specific download URIs
   when:

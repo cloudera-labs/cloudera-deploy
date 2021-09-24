@@ -43,7 +43,7 @@ use_default_cluster_definition: no
 
 # Default parcel cache
 default_enable_download_mirror: no
-default_parcel_distro: el7
+default_parcel_distro: el7  # el8, bionic
 default_download_link_expiry: 3600
 
 # Default Deployment Controls

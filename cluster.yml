@@ -69,7 +69,7 @@
     - full_cluster
 
 - name: Verify definition [verify_definition]
-  hosts: localhost
+  hosts: cloudera_manager
   gather_facts: no
   roles:
     - cloudera.cluster.verify.definition
@@ -92,7 +92,7 @@
 
 # Moved from verify_parcels to reduce duplication
 - name: Verify definition [verify_parcels_and_roles]
-  hosts: localhost
+  hosts: cloudera_manager
   gather_facts: no
   roles:
     - cloudera.cluster.verify.parcels_and_roles
@@ -467,7 +467,7 @@
     - full_cluster
 
 - name: Deploy clusters
-  hosts: localhost
+  hosts: cloudera_manager
   gather_facts: no
   roles:
     - cloudera.cluster.deployment.cluster

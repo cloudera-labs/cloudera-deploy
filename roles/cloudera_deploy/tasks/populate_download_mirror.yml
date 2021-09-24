@@ -28,7 +28,7 @@
   loop: "{{ globals.download_mirror_targets }}"
   loop_control:
     loop_var: __mirror_fetch_item
-  async: 3600
+  async: 7200
   poll: 0
   ansible.builtin.get_url:
     url: "{{ __mirror_fetch_item }}"
@@ -42,8 +42,8 @@
     loop_var: __download_async_item
   register: __async_download_results
   until: __async_download_results.finished is defined and __async_download_results.finished
-  delay: 15
-  retries: 300
+  delay: 30
+  retries: 240
   async_status:
     jid: "{{ __download_async_item.ansible_job_id }}"
   failed_when:
@@ -90,7 +90,7 @@
       ansible.builtin.package:
         name: "{{ __package_item }}"
         state: present
-        lock_timeout: 180
+        lock_timeout: "{{ (ansible_os_family == 'RedHat') | ternary(180, omit) }}"
       loop_control:
         loop_var: __package_item
       loop:
