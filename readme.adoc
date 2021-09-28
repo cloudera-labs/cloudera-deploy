@@ -445,7 +445,7 @@ ansible-playbook main.yml -e "definition_path=my_example" -t run --skip-tags inf
 
 WARNING: Setting a deployment to a lower runlevel, e.g. from `run` to `infra` will teardown deployed components in the higher runlevels.
 
-For further details on the various _runlevel_-like tags for CDP Public Cloud, see the https://github.com/cloudera-labs/cloudera.exe/docs/runlevels.md[Runlevel Guide] in the `cloudera.exe` project.
+For further details on the various _runlevel_-like tags for CDP Public Cloud, see the https://github.com/cloudera-labs/cloudera.exe/blob/main/docs/runlevels.md[Runlevel Guide] in the `cloudera.exe` project.
 
 == Definitions
 
