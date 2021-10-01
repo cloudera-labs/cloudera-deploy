@@ -47,5 +47,6 @@ default_parcel_distro: el7  # el8, bionic, focal
 default_download_link_expiry: 3600
 
 # Default Deployment Controls
+default_infra_deployment_engine: ansible
 default_infra_type: aws
 default_infra_region: us-east-1

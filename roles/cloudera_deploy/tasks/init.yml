@@ -173,7 +173,13 @@
       name_prefix: "{{ name_prefix | default(default_name_prefix) }}"
       tags: "{{ tags | default(omit) }}"
       region: "{{ infra_region | default(default_infra_region) }}"
+      infra_deployment_engine: "{{ infra_deployment_engine | default(default_infra_deployment_engine) }}"
       infra_type: "{{ infra_type | default(default_infra_type) }}"
+      terraform_template_dir: "{{ terraform_template_dir | default(omit) }}"
+      terraform_workspace_dir: "{{ terraform_workspace_dir | default(omit) }}"
+      terraform_state_storage: "{{ terraform_state_storage | default(omit) }}"
+      terraform_remote_state_bucket: "{{ terraform_remote_state_bucket | default(omit) }}"
+      terraform_remote_state_lock_table: "{{ terraform_remote_state_lock_table | default(omit) }}"
       ssh:
         public_key_id: "{{ public_key_id | default(omit) }}"
         public_key_file: "{{ public_key_file | default(omit) }}"
