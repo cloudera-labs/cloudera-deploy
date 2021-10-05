@@ -447,6 +447,46 @@ WARNING: Setting a deployment to a lower runlevel, e.g. from `run` to `infra` wi
 
 For further details on the various _runlevel_-like tags for CDP Public Cloud, see the https://github.com/cloudera-labs/cloudera.exe/blob/main/docs/runlevels.md[Runlevel Guide] in the `cloudera.exe` project.
 
+=== Terraform Deployment Engine
+
+Terraform can optionally be used to create the cloud infrastructure. This will attempt to create the cloud provider assets at the `infra` (network, storage and compute) and `plat` (IAM policies and roles) runlevels using Terraform resources. A list of Terraform related parameters are shown in the table below. 
+
+.List of parameters used by Terraform deployment engine
+[cols="1,1,1,1"]
+|===
+|Parameter|Description|Default Value|Notes
+
+|`infra_deployment_engine`
+|The engine (ansible or terraform) that will be used to create the infrastructure resources.
+| `ansible`
+| Needs to be set to `terraform` for Terraform-deployment.
+
+|`terraform_template_dir`
+|Directory where processed Jinja template files for Terraform are placed. A timestamped artefact directory with a copy of the Terraform files from each execution of cloudera-deploy are also placed under this directory.
+| `{{ playbook_dir }}/terraform_processed_template_code`
+|
+
+|`terraform_workspace_dir`
+|Directory from where the terraform apply is run. The latest template files are copied to this directory as part of the setup steps.
+| `{{ playbook_dir }}/.namespaces`
+|
+
+|`terraform_state_storage`
+|The type of backend storage to use for the Terraform state. |
+| `local`
+| Current options are `local` or `remote_s3`
+
+|`terraform_remote_state_bucket`
+|The name of the Terraform state storage bucket. |
+| 
+| Required if using `remote_s3` state storage
+
+|`terraform_remote_state_lock_table`
+|The name of the table to track locks of remote Terraform state.
+| 
+| Required if using `remote_s3` state storage
+|===
+
 == Definitions
 
 Cloudera Deploy uses a set of configuration files within a directory to define and coordinate a deployment. This directory also stores any artifacts created during the deployment, such as Ansible inventory files, CDP environment readouts, etc.
