@@ -24,6 +24,9 @@ df:
 #  kube_ip_ranges: []
 #  cluster_subnets: []
 #  loadbalancer_subnets: []
+#  terminate_deployments: True  # Whether to terminate Flow deployments before service teardown
+#  teardown:
+#    persist: False  # Whether to keep backend database records for the service after teardown
 
 env:
   public_endpoint_access: yes
