@@ -105,7 +105,7 @@
         loop_var: __pip_item
       loop:
         - futures
-        - boto3 >= 1.4.4
+        - boto3 >= 1.4.4,<1.18
 
     - name: Sync downloaded Files paths to S3 cache bucket
       become: yes
