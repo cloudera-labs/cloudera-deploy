@@ -17,16 +17,26 @@
 # Commented values are shown with the defaults, uncomment and change to override
 
 df:
-#  nodes_min: 3
-#  nodes_max: 5
+#  min_k8s_nodes: 3
+#  max_k8s_nodes: 5
 #  public_loadbalancer: True
-#  ip_ranges: []
+#  loadbalancer_ip_ranges: []
+#  kube_ip_ranges: []
+#  cluster_subnets: []
+#  loadbalancer_subnets: []
+#  terminate_deployments: True  # Whether to terminate Flow deployments before service teardown
+#  teardown:
+#    persist: False  # Whether to keep backend database records for the service after teardown
 
-datahub:
-  definitions:
-    - definition: "Flow Management Light Duty"
-      suffix: nifi-dhub
-    - definition: "Streams Messaging Light Duty"
-      suffix: kafka-dhub
-    - definition: "Streaming Analytics Light Duty"
-      suffix: flink-dhub
+env:
+  public_endpoint_access: yes
+  tunnel: yes
+
+#datahub:
+#  definitions:
+#    - definition: "Flow Management Light Duty"
+#      suffix: nifi-dhub
+#    - definition: "Streams Messaging Light Duty"
+#      suffix: kafka-dhub
+#    - definition: "Streaming Analytics Light Duty"
+#      suffix: flink-dhub
