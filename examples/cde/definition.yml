@@ -18,16 +18,24 @@ de:
   definitions:
     - name: cde-cloudera-deploy-example
       instance_type: 'm5.2xlarge'
-      minimum_instances: 2
+      minimum_instances: 1
       maximum_instances: 4
       minimum_spot_instances: 0
       maximum_spot_instances: 0
       enable_public_endpoint: yes
       enable_workload_analytics: yes
-      initial_instances: 2
+      initial_instances: 1
       initial_spot_instances: 0
       root_volume_size: 100
       chart_value_overrides: [{"chartName":"dex-app", "overrides":"dexapp.api.gangScheduling.enabled:true"}]
       skip_validation: yes
       tags: {'cde-cloudera-deploy-example':'v0.0.1'}
       use_ssd: yes
+      virtual_clusters:
+        - name: cloudera-deployed-vc-1
+          cpu_requests: 32
+          memory_requests: '128Gi'
+          spark_version: 'SPARK2'
+          acl_users: '*'
+          runtime_spot_component: 'NONE'
+          chart_value_overrides: [{"chartName":"dex-app", "overrides":"pipelines.enabled:true"}]
