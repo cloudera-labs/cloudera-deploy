@@ -106,7 +106,7 @@
 # STARTBLOCK # Prepare Nodes
 
 - name: Apply OS pre-requisite configurations
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ca_server
   become: yes
   roles:
     - cloudera.cluster.prereqs.os
