@@ -460,7 +460,7 @@ Within the directory, you *must* supply the following files:
 
 Optionally, if deploying a CDP Private Cloud cluster or need to set up adhoc IaaS infrastructure, you can supply the following :
 
-* `inventory_static.ini`
+* `inventory_template.ini`
 * `inventory_template.ini`
 
 The definition directory can host any other file or asset, such as data files, additional configuration details, additional playbooks. However, Cloudera Deploy will not operate unless the `definition.yml` and `application.yml` files are present.
@@ -501,7 +501,7 @@ NOTE: This file is a standard Ansible playbook, and when it is executed (via `im
 
 === `inventory_static.ini`
 
-You may also include an `inventory_static.ini` file that describes your static Ansible inventory. This file will be automatically loaded and added to the Ansible inventory. Note that you can also use the standard Ansible `-i` switch to include other static inventory.
+You may also include an `inventory_template.ini` file that describes your static Ansible inventory. This file will be automatically loaded and added to the Ansible inventory. Note that you can also use the standard Ansible `-i` switch to include other static inventory.
 
 === `inventory_template.ini`
 

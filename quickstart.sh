@@ -33,7 +33,8 @@ PROJECT_DIR=${1:-${PARENT_DIRECTORY}}
 echo "Checking if Docker is running..."
 { docker info >/dev/null 2>&1; echo "Docker OK"; } || { echo "Docker is required and does not seem to be running - please start Docker and retry" ; exit 1; }
 
-docker pull ${IMAGE_NAME}:"${IMAGE_TAG}"
+echo "Checking for updated execution container image '${IMAGE_FULL_NAME}'"
+docker pull "${IMAGE_FULL_NAME}"
 
 echo "Ensuring default credential paths are available in calling using profile for mounting to execution environment"
 for thisdir in ".aws" ".ssh" ".cdp" ".azure" ".kube" ".config" ".config/cloudera-deploy/log" ".config/cloudera-deploy/profiles"
@@ -51,17 +52,26 @@ if [ ! -f "${HOME}"/.config/cloudera-deploy/profiles/default ]; then
 fi
 
 # If CLDR_COLLECTION_PATH is set, the default version in the container will be removed and this path added to the Ansible Collection path
-# The path supplied must be relative to PROJECT_DIR
+# The path supplied must be relative to PROJECT_DIR, e.g. ansible_dev/collections
 if [ -n "${CLDR_COLLECTION_PATH}" ]; then
   echo "Path to custom Cloudera Collection supplied as ${CLDR_COLLECTION_PATH}, adding to Ansible Collection path"
   ANSIBLE_COLLECTIONS_PATH="/opt/cldr-runner/collections:/runner/project/${CLDR_COLLECTION_PATH}"
+  QUICKSTART_PROMPT='Quickstart? Run this command -- ansible-playbook project/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" -t run,default_cluster'
 else
   echo "Custom Cloudera Collection path not found"
   ANSIBLE_COLLECTIONS_PATH="/opt/cldr-runner/collections"
+  QUICKSTART_PROMPT='Quickstart? Run this command -- ansible-playbook /opt/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" -t run,default_cluster'
 fi
 
-echo "Mounting ${PROJECT_DIR} to container as Project Directory /runner/project"
-echo "Creating Container ${CONTAINER_NAME} from image ${IMAGE_FULL_NAME}"
+# If CLDR_PYTHON_PATH is set, that will be set as the system PYTHONPATH variable in the container
+# This is a good way to point at any custom python source code in your /runner/project mount, including CDPY
+# The path supplied must be a full path to the source root for each source included, e.g /runner/project/cdpy/src
+if [ -n "${CLDR_PYTHON_PATH}" ]; then
+  echo "Path to custom Python sourcecode supplied as ${CLDR_PYTHON_PATH}, setting as System PYTHONPATH"
+  PYTHONPATH="${CLDR_PYTHON_PATH}"
+else
+  echo "'CLDR_PYTHON_PATH' is not set, skipping setup of PYTHONPATH in execution container"
+fi
 
 echo "Checking if ssh-agent is running..."
 if pgrep -x "ssh-agent" >/dev/null
@@ -75,12 +85,12 @@ fi
 echo "Checking OS"
 if [ ! -f "/run/host-services/ssh-auth.sock" ]; 
 then
-   if [ ! -z "$SSH_AUTH_SOCK" ]; 
+   if [ -n "${SSH_AUTH_SOCK}" ];
    then 
         SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
    else
-	echo "SSH_AUTH_SOCK is empty or not set, unable to proceed. Exiting" 
-	exit -1
+	echo "ERROR: SSH_AUTH_SOCK is empty or not set, unable to proceed. Exiting"
+	exit 1
    fi
 else
 	SSH_AUTH_SOCK=${SSH_AUTH_SOCK}
@@ -95,11 +105,11 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
         docker rm "${CONTAINER_NAME}" >/dev/null 2>&1 || echo "Execution container '${CONTAINER_NAME}' already removed, continuing..."
     fi
     # create new container if not running
-    echo "Creating new execution container named '${CONTAINER_NAME}'"
+    echo "Creating new execution container named '${CONTAINER_NAME}' with '${PROJECT_DIR}' mounted to /runner/project from image '${IMAGE_FULL_NAME}'"
     docker run -td \
       --detach-keys="ctrl-@" \
       -v "${PROJECT_DIR}":/runner/project \
-      --mount type=bind,src=${SSH_AUTH_SOCK},target=/run/host-services/ssh-auth.sock \
+      --mount type=bind,src="${SSH_AUTH_SOCK}",target=/run/host-services/ssh-auth.sock \
       -e SSH_AUTH_SOCK="/run/host-services/ssh-auth.sock" \
       -e ANSIBLE_LOG_PATH="/home/runner/.config/cloudera-deploy/log/${CLDR_BUILD_VER:-latest}-$(date +%F_%H%M%S)" \
       -e ANSIBLE_INVENTORY="inventory" \
@@ -109,6 +119,7 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
       -e ANSIBLE_HOST_KEY_CHECKING=false \
       -e ANSIBLE_SSH_RETRIES=10 \
       -e ANSIBLE_COLLECTIONS_PATH="${ANSIBLE_COLLECTIONS_PATH}" \
+      -e PYTHONPATH="${PYTHONPATH}" \
       -e ANSIBLE_ROLES_PATH="/opt/cldr-runner/roles" \
       -e AWS_DEFAULT_OUTPUT="json" \
       --mount "type=bind,source=${HOME}/.aws,target=/home/runner/.aws" \
@@ -128,6 +139,9 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
     if [ -n "${CLDR_COLLECTION_PATH}" ]; then
       docker exec -td "${CONTAINER_NAME}" /usr/bin/env rm -rf /opt/cldr-runner/collections/ansible_collections/cloudera
     fi
+    if [ -n "${CLDR_PYTHON_PATH}" ]; then
+      docker exec -td "${CONTAINER_NAME}" pip uninstall -y cdpy
+    fi
 fi
 
 cat <<SSH_HOST_KEY
@@ -141,7 +155,7 @@ cat <<SSH_HOST_KEY
 
 SSH_HOST_KEY
 
-echo 'Quickstart? Run this command -- ansible-playbook /opt/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" -t run,default_cluster'
+echo "${QUICKSTART_PROMPT}"
 docker exec \
   --detach-keys="ctrl-@" \
   -it "${CONTAINER_NAME}" \
