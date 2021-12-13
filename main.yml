@@ -28,7 +28,7 @@
 - name: Import the Cloud Interactions Playbook
   import_playbook: cloud.yml
 
-- name: Teardown Dynamic Inventory when requested
+- name: Teardown Cleanup
   hosts: localhost
   tags: [teardown,never]
   gather_facts: yes
@@ -38,13 +38,7 @@
         name: cloudera_deploy
         tasks_from: clean_dynamic_inventory
 
-# Teardown Terraform remote state resources if requested
-- name: Teardown Terraform remote state resources
-  hosts: localhost
-  tags: [teardown,never]
-  gather_facts: yes
-  tasks:
-    - name: Remove remote state resources if requested
+    - name: Remove Terraform remote state resources if requested
       when:
         - globals.infra_deployment_engine == 'terraform'
         - globals.terraform_auto_remote_state | bool
