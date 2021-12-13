@@ -52,8 +52,6 @@
       ansible.builtin.include_role:
         name: cloudera_deploy
         tasks_from: auto_terraform_state
-      vars:
-        auto_terraform_state_action: teardown
 
 - name: Prepare for Cloudera Cluster Run
   hosts: localhost

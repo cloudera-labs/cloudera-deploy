@@ -469,8 +469,6 @@
       ansible.builtin.include_role:
         name: cloudera_deploy
         tasks_from: auto_terraform_state
-      vars:
-        auto_terraform_state_action: create
 
 - name: Prepare for Download Mirror Population if requested and necessary
   when:
