@@ -50,3 +50,6 @@ default_download_link_expiry: 3600
 default_infra_deployment_engine: ansible
 default_infra_type: aws
 default_infra_region: us-east-1
+
+# Terraform defaults
+default_terraform_base_dir: "{{ [default_config_path, 'terraform'] | path_join }}" 
