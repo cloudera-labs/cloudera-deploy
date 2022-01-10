@@ -42,7 +42,9 @@
         _jq: "instanceGroups[?name=='core_broker'].instances[*].fqdn"
 
     - name: Deploy example DFX Flow - Kafka to Kafka
-      when: "'teardown' not in ansible_run_tags"
+      when:
+        - "'teardown' not in ansible_run_tags"
+        - kafka_brokers_fqdns | length > 0
       cloudera.cloud.df_deployment:
         name: "{{ globals.name_prefix }}_ex_kafkatokafka"
         df_name: "{{ deployment.environment.environmentName }}"
@@ -50,6 +52,7 @@
         autoscale: yes
         autostart_flow: yes
         parameter_groups: "{{ parameter_groups }}"
+        kpis: "{{ kpis }}"
       vars:
         parameter_groups:
           - name: "kafka-to-kafka"
@@ -68,3 +71,13 @@
                 value: "_ex_cdf_prodc0"
               - name: "Kafka Source Topic"
                 value: "ex_cdf_source"
+        kpis:
+          - metricId: cpuUtilization
+            alert:
+              thresholdMoreThan:
+                unitId: percentage
+                value: 25
+              frequencyTolerance:
+                unit:
+                  id: MINUTES
+                value: 5
