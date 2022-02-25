@@ -173,7 +173,13 @@
       name_prefix: "{{ name_prefix | default(default_name_prefix) }}"
       tags: "{{ tags | default(omit) }}"
       region: "{{ infra_region | default(default_infra_region) }}"
+      infra_deployment_engine: "{{ infra_deployment_engine | default(default_infra_deployment_engine) }}"
       infra_type: "{{ infra_type | default(default_infra_type) }}"
+      terraform_base_dir: "{{ terraform_base_dir | default(default_terraform_base_dir) | expanduser }}"
+      terraform_state_storage: "{{ terraform_state_storage | default(omit) }}"
+      terraform_auto_remote_state: "{{ terraform_auto_remote_state | default(False) }}"
+      terraform_remote_state_bucket: "{{ terraform_remote_state_bucket | default(omit) }}"
+      terraform_remote_state_lock_table: "{{ terraform_remote_state_lock_table | default(omit) }}"
       ssh:
         public_key_id: "{{ public_key_id | default(omit) }}"
         public_key_file: "{{ public_key_file | default(omit) }}"
@@ -215,6 +221,31 @@
       - globals.name_prefix | length < 8
       - globals.name_prefix | regex_search('^[a-zA-Z]')
     fail_msg: "You must supply a valid Namespace"
+    quiet: yes
+
+- name: Check Deployment Engine variable
+  ansible.builtin.assert:
+    that:
+      - globals.infra_deployment_engine in ['ansible', 'terraform']
+    fail_msg: "The 'infra_deployment_engine' variable must be one of 'ansible', 'terraform'"
+    
+- name: Check Supplied terraform_base_dir variable
+  when:
+    - infra_deployment_engine == 'terraform'
+  ansible.builtin.assert:
+    that:
+      - globals.terraform_base_dir is defined
+      - globals.terraform_base_dir | length > 0
+    fail_msg: "You must supply a 'terraform_base_dir' where Terraform assets will be placed"
+    quiet: yes
+
+- name: Check Supplied terraform_auto_remote_state variable
+  when:
+    - infra_deployment_engine == 'terraform'
+  ansible.builtin.assert:
+    that:
+      - (globals.terraform_auto_remote_state|bool is sameas true) or (globals.terraform_auto_remote_state|bool is sameas false)
+    fail_msg: "The terraform_auto_remote_state variable must be a boolean variable"
     quiet: yes
 
 # SSH
@@ -405,3 +436,44 @@
     fail_msg: >-
       Admin Password must comply with CDP Public requirements: 1 Upper, 1 Special, 1 Number, 8-64 chars.
     quiet: yes
+
+# Provision Terraform remote state resources if requested
+- name: Initialize Terraform remote state resources
+  when:
+    - init__call_cloud_role | bool
+    - globals.infra_deployment_engine == 'terraform'
+    - globals.terraform_auto_remote_state | bool
+    - globals.terraform_state_storage in ['remote_s3']
+  block:
+    # Set resource variable names if not already done
+    - name: Set variables for remote state bucket if not set
+      when: (globals.terraform_remote_state_bucket is not defined) or
+            ( (globals.terraform_remote_state_bucket) | length == 0)
+      ansible.builtin.set_fact:
+        globals: "{{ globals | default({}) | combine(remote_state_vars, recursive=True) }}"
+      vars:
+        remote_state_vars:
+          terraform_remote_state_bucket: "{{ [globals.name_prefix, 'state-bucket'] | join('-') }}"
+
+    - name: Set variables for remote state lock table if not set
+      when: (globals.terraform_remote_state_lock_table is not defined) or
+            (globals.terraform_remote_state_lock_table | length == 0)   
+      ansible.builtin.set_fact:
+        globals: "{{ globals | default({}) | combine(remote_state_vars, recursive=True) }}"
+      vars:
+        remote_state_vars:
+          terraform_remote_state_lock_table: "{{ [globals.name_prefix, 'state-lock-table'] | join('-') }}"
+
+    - name: Create remote state resources
+      when: "'teardown' not in ansible_run_tags"
+      ansible.builtin.include_role:
+        name: cloudera_deploy
+        tasks_from: auto_terraform_state
+
+- name: Prepare for Download Mirror Population if requested and necessary
+  when:
+    - use_download_mirror | default(default_enable_download_mirror) | bool
+    - "'teardown' not in ansible_run_tags"
+  ansible.builtin.include_role:
+    name: cloudera_deploy
+    tasks_from: prepare_download_mirror

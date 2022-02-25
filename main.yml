@@ -28,7 +28,7 @@
 - name: Import the Cloud Interactions Playbook
   import_playbook: cloud.yml
 
-- name: Teardown Dynamic Inventory when requested
+- name: Teardown Cleanup
   hosts: localhost
   tags: [teardown,never]
   gather_facts: yes
@@ -37,6 +37,15 @@
       ansible.builtin.include_role:
         name: cloudera_deploy
         tasks_from: clean_dynamic_inventory
+
+    - name: Remove Terraform remote state resources if requested
+      when:
+        - globals.infra_deployment_engine == 'terraform'
+        - globals.terraform_auto_remote_state | bool
+        - globals.terraform_state_storage in ['remote_s3']
+      ansible.builtin.include_role:
+        name: cloudera_deploy
+        tasks_from: auto_terraform_state
 
 - name: Prepare for Cloudera Cluster Run
   hosts: localhost
