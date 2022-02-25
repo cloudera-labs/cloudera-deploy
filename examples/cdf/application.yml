@@ -24,18 +24,23 @@
     - name: Construct the deployment details
       when:
         - deployment is undefined
+        - "'run' in ansible_run_tags"
         - "'teardown' not in ansible_run_tags"
       ansible.builtin.include_role:
         name: cloudera.exe.info
 
     - name: Get CDP workload username for current user
-      when: "'teardown' not in ansible_run_tags"
+      when:
+        - "'teardown' not in ansible_run_tags"
+        - "'run' in ansible_run_tags"
       cloudera.cloud.iam_user_info:
         current_user: yes
       register: __iam
 
     - name: Extract Kafka Brokers from Info
-      when: "'teardown' not in ansible_run_tags"
+      when:
+        - "'teardown' not in ansible_run_tags"
+        - "'run' in ansible_run_tags"
       ansible.builtin.set_fact:
         kafka_brokers_fqdns: "{{ deployment.datahubs | selectattr('workloadType', 'search', 'Streams Messaging') | first | json_query(_jq) | first }}"
       vars:
@@ -44,6 +49,7 @@
     - name: Deploy example DFX Flow - Kafka to Kafka
       when:
         - "'teardown' not in ansible_run_tags"
+        - "'run' in ansible_run_tags"
         - kafka_brokers_fqdns | length > 0
       cloudera.cloud.df_deployment:
         name: "{{ globals.name_prefix }}_ex_kafkatokafka"
