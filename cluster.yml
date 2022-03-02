@@ -158,6 +158,17 @@
     - oracle_connector
     - full_cluster
 
+- name: Install PostgreSQL Connector
+  hosts: cloudera_manager, cluster
+  gather_facts: no
+  become: yes
+  roles:
+    - role: cloudera.cluster.prereqs.postgresql_connector
+      when: database_type == 'postgresql'
+  tags:
+    - postgresql_connector
+    - full_cluster
+
 # ENDBLOCK # Prepare Nodes
 # STARTBLOCK # Create Cluster Service Infrastructure
 
