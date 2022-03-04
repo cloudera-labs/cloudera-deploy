@@ -189,6 +189,7 @@
       cloudera_license_file: "{{ license_file | default(omit) }}"
       gcloud_credential_file: "{{ gcloud_credential_file | default(omit) }}"
       cdp_profile: "{{ cdp_profile | default(omit) }}"
+      cdp_region: "{{ cdp_region | default(omit) }}"
       aws_profile: "{{ aws_profile | default(omit) }}"
       force_teardown: "{{ purge | default(omit) }}"
       env_vars: "{{ env_vars | default(omit) }}"
