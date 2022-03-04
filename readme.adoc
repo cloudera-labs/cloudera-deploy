@@ -34,13 +34,15 @@ You can use Cloudera Deploy as your entrypoint for getting started with CDP. The
 
 ==== Install Docker
 
-Get the latest version of **Docker Engine**.
+Cloudera-Deploy bundles nearly all the software dependencies you need into a convenient Docker Container, so first you will need to get the latest version of **Docker Engine**.
 
 * https://docs.docker.com/docker-for-windows/install/[For Windows]
 * https://docs.docker.com/docker-for-mac/install/[For Macs]
 * Linux users, use your package manager.
 
 WARNING: Be sure you uninstall any earlier versions of Docker, i.e. `docker`, and install the latest version, i.e. `docker-ce`. See https://docs.docker.com/engine/install/[Install Docker Engine] for futher details.
+
+TIP: If you have not used Docker before, consider following their quick https://docs.docker.com/get-started/#start-the-tutorial[Tutorial] to validate it is working and familiarise yourself with the interface
 
 ==== (Optional) Install Git
 
@@ -50,19 +52,19 @@ There are excellent instructions for installing Git on all Operating Systems on 
 
 ==== (Optional) Install AWS CLI
 
-Get the latest version of the **AWS CLI**.
+If you are going to be working with AWS, you will want the latest version of the **AWS CLI**.
 
 * https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-windows.html[For Windows]
 * https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-mac.html[For Macs]
 * Linux users, use your package manager.
 
-NOTE: The Quickstart image prepackages the AWS CLI.
+NOTE: The Quickstart image prepackages the AWS CLI, so it is optional to also install it locally
 
-If this is the first time you are installing the AWS CLI, configure the program by providing your credentials.
-
+If this is the first time you are installing the AWS CLI, configure the program by providing your credentials, and test that your credentials work
 [source, bash]
 ----
 aws configure
+aws iam get-user
 ----
 
 Visit the https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html[AWS CLI User Guide] for further details regarding credential management.
@@ -73,13 +75,14 @@ Get the latest version of the **CDP CLI**.
 
 ** https://docs.cloudera.com/cdp/latest/cli/topics/mc-installing-cdp-client.html[Install CDP CLI].
 
-NOTE: The Quickstart image prepackages the CPI CLI.
+NOTE: The Quickstart image prepackages the CPI CLI, so it is optional to also install it locally
 
-If this is the first time you are installing the CDP CLI, you will need to configure the program by providing the right credentials.
+If this is the first time you are installing the CDP CLI, you will need to configure the program by providing the right credentials, and should then test that your credentials work.
 
 [source, bash]
 ----
 cdp configure
+cdp iam get-user
 ----
 
 Visit the https://docs.cloudera.com/cdp/latest/cli/topics/mc-configuring-cdp-client-with-the-api-access-key.html[CDP CLI User Guide] for further details regarding credential management.
@@ -88,19 +91,17 @@ Visit the https://docs.cloudera.com/cdp/latest/cli/topics/mc-configuring-cdp-cli
 
 Ensure that you have a generated SSH keypair for your local profile. Visit the https://www.ssh.com/academy/ssh/keygen[SSH Keygen How-To] for details.
 
-NOTE: The Quickstart will generate a SSH keypair if none is provided.
+NOTE: The Quickstart will generate an SSH keypair if none is provided.
 
 ==== (Recommended) Confirm your SSH Agent
 
 Ensure that you have a properly configured SSH Agent. Visit the https://www.ssh.com/academy/ssh/keygen#adding-the-key-to-ssh-agent[SSH Agent How-To] for details.
 
-TIP: Put AWS CLI and CDP CLI programs in your `$PATH` to make these two programs easily accessible.
-
 === Setup
 
 ==== Option 1: Download the Quickstart script
 
-The `quickstart.sh` script will setup the Docker container with the software dependencies you need for deployment.
+The `quickstart.sh` script will set up the Docker container with the software dependencies you need for deployment.
 
 [source, bash]
 ----
@@ -117,15 +118,16 @@ git clone https://github.com/cloudera-labs/cloudera-deploy.git
 cd cloudera-deploy
 ----
 
-WARNING: Be careful to not modify any of the files in the project as a user of the software. The vast majority of changes are managed through configurations provided to these project files.
+WARNING: You are advised not to modify any of the files in the project as a user of the software. The vast majority of changes are managed through configurations provided to these project files.
 
 ==== Confirm your Docker service
 
-Check that **Docker** is running.
+Check that **Docker** is running by running the command to list running Docker containers
 
-* https://docs.docker.com/docker-for-windows/[For Windows]
-* https://docs.docker.com/docker-for-mac/[For Macs]
-* Linux users, use `systemd` (or another init system)
+[source,bash]
+docker ps -a
+
+If it is not running, please check your prerequisites process for Docker to install, start, and test the service.
 
 ==== Execute the Quickstart script
 
@@ -163,7 +165,7 @@ vim ~/.config/cloudera-deploy/profiles/default
 * Optional
 ** *tags* (see the link:profile.yml[profile template] comments)
 
-WARNING: Please ensure you provide a valid region for the `infra_type` property.
+WARNING: Please ensure you provide a valid region for your selected Cloud provider for the `infra_type` property.
 
 === Execution
 
@@ -256,6 +258,7 @@ In the cloudera-deploy directory, pull the latest changes with git
 
 [source, bash]
 ----
+git fetch --all
 git pull
 ----
 
