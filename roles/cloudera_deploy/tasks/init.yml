@@ -232,7 +232,7 @@
     
 - name: Check Supplied terraform_base_dir variable
   when:
-    - infra_deployment_engine == 'terraform'
+    - globals.infra_deployment_engine == 'terraform'
   ansible.builtin.assert:
     that:
       - globals.terraform_base_dir is defined
@@ -242,7 +242,7 @@
 
 - name: Check Supplied terraform_auto_remote_state variable
   when:
-    - infra_deployment_engine == 'terraform'
+    - globals.infra_deployment_engine == 'terraform'
   ansible.builtin.assert:
     that:
       - (globals.terraform_auto_remote_state|bool is sameas true) or (globals.terraform_auto_remote_state|bool is sameas false)
