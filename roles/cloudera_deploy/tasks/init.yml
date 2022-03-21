@@ -175,11 +175,12 @@
       region: "{{ infra_region | default(default_infra_region) }}"
       infra_deployment_engine: "{{ infra_deployment_engine | default(default_infra_deployment_engine) }}"
       infra_type: "{{ infra_type | default(default_infra_type) }}"
-      terraform_base_dir: "{{ terraform_base_dir | default(default_terraform_base_dir) | expanduser }}"
-      terraform_state_storage: "{{ terraform_state_storage | default(omit) }}"
-      terraform_auto_remote_state: "{{ terraform_auto_remote_state | default(False) }}"
-      terraform_remote_state_bucket: "{{ terraform_remote_state_bucket | default(omit) }}"
-      terraform_remote_state_lock_table: "{{ terraform_remote_state_lock_table | default(omit) }}"
+      terraform:
+        base_dir: "{{ terraform.base_dir | default(default_terraform_base_dir) | expanduser }}"
+        state_storage: "{{ terraform.state_storage | default(omit) }}"
+        auto_remote_state: "{{ terraform.auto_remote_state | default(False) }}"
+        remote_state_bucket: "{{ terraform.remote_state_bucket | default(omit) }}"
+        remote_state_lock_table: "{{ terraform.remote_state_lock_table | default(omit) }}"
       ssh:
         public_key_id: "{{ public_key_id | default(omit) }}"
         public_key_file: "{{ public_key_file | default(omit) }}"
@@ -235,8 +236,8 @@
     - globals.infra_deployment_engine == 'terraform'
   ansible.builtin.assert:
     that:
-      - globals.terraform_base_dir is defined
-      - globals.terraform_base_dir | length > 0
+      - globals.terraform.base_dir is defined
+      - globals.terraform.base_dir | length > 0
     fail_msg: "You must supply a 'terraform_base_dir' where Terraform assets will be placed"
     quiet: yes
 
@@ -245,8 +246,8 @@
     - globals.infra_deployment_engine == 'terraform'
   ansible.builtin.assert:
     that:
-      - (globals.terraform_auto_remote_state|bool is sameas true) or (globals.terraform_auto_remote_state|bool is sameas false)
-    fail_msg: "The terraform_auto_remote_state variable must be a boolean variable"
+      - (globals.terraform.auto_remote_state|bool is sameas true) or (globals.terraform.auto_remote_state|bool is sameas false)
+    fail_msg: "The terraform.auto_remote_state variable must be a boolean variable"
     quiet: yes
 
 # SSH
@@ -443,27 +444,29 @@
   when:
     - init__call_cloud_role | bool
     - globals.infra_deployment_engine == 'terraform'
-    - globals.terraform_auto_remote_state | bool
-    - globals.terraform_state_storage in ['remote_s3']
+    - globals.terraform.auto_remote_state | bool
+    - globals.terraform.state_storage in ['remote_s3']
   block:
     # Set resource variable names if not already done
     - name: Set variables for remote state bucket if not set
-      when: (globals.terraform_remote_state_bucket is not defined) or
-            ( (globals.terraform_remote_state_bucket) | length == 0)
+      when: (globals.terraform.remote_state_bucket is not defined) or
+            ( (globals.terraform.remote_state_bucket) | length == 0)
       ansible.builtin.set_fact:
         globals: "{{ globals | default({}) | combine(remote_state_vars, recursive=True) }}"
       vars:
         remote_state_vars:
-          terraform_remote_state_bucket: "{{ [globals.name_prefix, 'state-bucket'] | join('-') }}"
+          terraform:
+            remote_state_bucket: "{{ [globals.name_prefix, 'state-bucket'] | join('-') }}"
 
     - name: Set variables for remote state lock table if not set
-      when: (globals.terraform_remote_state_lock_table is not defined) or
-            (globals.terraform_remote_state_lock_table | length == 0)   
+      when: (globals.terraform.remote_state_lock_table is not defined) or
+            (globals.terraform.remote_state_lock_table | length == 0)   
       ansible.builtin.set_fact:
         globals: "{{ globals | default({}) | combine(remote_state_vars, recursive=True) }}"
       vars:
         remote_state_vars:
-          terraform_remote_state_lock_table: "{{ [globals.name_prefix, 'state-lock-table'] | join('-') }}"
+          terraform:
+            remote_state_lock_table: "{{ [globals.name_prefix, 'state-lock-table'] | join('-') }}"
 
     - name: Create remote state resources
       when: "'teardown' not in ansible_run_tags"

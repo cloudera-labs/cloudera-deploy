@@ -41,8 +41,8 @@
     - name: Remove Terraform remote state resources if requested
       when:
         - globals.infra_deployment_engine == 'terraform'
-        - globals.terraform_auto_remote_state | bool
-        - globals.terraform_state_storage in ['remote_s3']
+        - globals.terraform.auto_remote_state | bool
+        - globals.terraform.state_storage in ['remote_s3']
       ansible.builtin.include_role:
         name: cloudera_deploy
         tasks_from: auto_terraform_state
