@@ -41,6 +41,7 @@
       when:
         - "'teardown' not in ansible_run_tags"
         - "'run' in ansible_run_tags"
+        - "{{ deployment.datahubs | selectattr('workloadType', 'search', 'Streams Messaging') | length > 0 }}"
       ansible.builtin.set_fact:
         kafka_brokers_fqdns: "{{ deployment.datahubs | selectattr('workloadType', 'search', 'Streams Messaging') | first | json_query(_jq) | first }}"
       vars:
@@ -50,6 +51,7 @@
       when:
         - "'teardown' not in ansible_run_tags"
         - "'run' in ansible_run_tags"
+        - kafka_brokers_fqdns is defined
         - kafka_brokers_fqdns | length > 0
       cloudera.cloud.df_deployment:
         name: "{{ globals.name_prefix }}_ex_kafkatokafka"
