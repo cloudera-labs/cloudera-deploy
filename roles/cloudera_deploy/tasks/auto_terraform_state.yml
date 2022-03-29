@@ -16,14 +16,14 @@
 
 - name: Resources for remote_s3 state storage
   when:
-    - globals.terraform_state_storage == 'remote_s3'
+    - globals.terraform.state_storage == 'remote_s3'
   block:
     
     # Create or Teardown the resources
     - name: AWS Bucket for Remote State Storage
       amazon.aws.aws_s3:
         region: "{{ globals.region }}"
-        bucket: "{{ globals.terraform_remote_state_bucket}}"
+        bucket: "{{ globals.terraform.remote_state_bucket}}"
         mode: "{{ ('teardown' not in ansible_run_tags)  | ternary('create', 'delete') }}" # Check ansible tag to determine action
         permission: private
       register: __infra_aws_storage_locations_info
@@ -31,7 +31,7 @@
     - name: AWS DynamoDB for Remote State Locking
       community.aws.dynamodb_table:
         region: "{{ globals.region }}"
-        name: "{{ globals.terraform_remote_state_lock_table }}"
+        name: "{{ globals.terraform.remote_state_lock_table }}"
         read_capacity: 1
         write_capacity: 1
         hash_key_name: LockID
@@ -43,6 +43,6 @@
       ansible.builtin.debug:
         msg:
           - "Resources for remote_s3 Terraform State created."
-          - "S3 Bucket Name: {{ globals.terraform_remote_state_bucket}}"
-          - "DynamoDB Locking Table: {{ globals.terraform_remote_state_lock_table}}"
+          - "S3 Bucket Name: {{ globals.terraform.remote_state_bucket}}"
+          - "DynamoDB Locking Table: {{ globals.terraform.remote_state_lock_table}}"
         verbosity: 3
