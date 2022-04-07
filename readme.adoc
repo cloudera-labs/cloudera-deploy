@@ -504,7 +504,7 @@ Within the directory, you *must* supply the following files:
 
 Optionally, if deploying a CDP Private Cloud cluster or need to set up adhoc IaaS infrastructure, you can supply the following :
 
-* `inventory_template.ini`
+* `inventory_static.ini`
 * `inventory_template.ini`
 
 The definition directory can host any other file or asset, such as data files, additional configuration details, additional playbooks. However, Cloudera Deploy will not operate unless the `definition.yml` and `application.yml` files are present.
