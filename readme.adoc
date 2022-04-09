@@ -1,6 +1,6 @@
 = Cloudera Deploy
 cloudera-labs@cloudera.com
-v1.5.0
+v1.6.1
 :page-layout: docs
 :description: Cloudera Deploy Documentation
 :imagesdir: ./images
