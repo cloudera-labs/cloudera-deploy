@@ -16,25 +16,29 @@
 
 set -e
 
-IMAGE_NAME="ghcr.io/cloudera-labs/cldr-runner"
-provider=${provider:-full}
-IMAGE_VER=${image_ver:-latest}
-IMAGE_TAG=${provider}-${IMAGE_VER}
-IMAGE_FULL_NAME=${IMAGE_NAME}:${IMAGE_TAG}
-CONTAINER_NAME=cloudera-deploy
+IMAGE_NAME="${image_name:-ghcr.io/cloudera-labs/cldr-runner}"
+PROVIDER="${provider:-full}"
+IMAGE_VER="${image_ver:-latest}"
+IMAGE_NO_PULL="${no_pull:+true}"
+CONTAINER_NAME="${container:-cloudera-deploy}"
+
+IMAGE_TAG="${PROVIDER}-${IMAGE_VER}"
+IMAGE_FULL_NAME="${IMAGE_NAME}:${IMAGE_TAG}"
 
 # dir of script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )";
 # parent dir of that dir
 PARENT_DIRECTORY="${DIR%/*}"
 
-PROJECT_DIR=${1:-${PARENT_DIRECTORY}}
+PROJECT_DIR="${1:-${PARENT_DIRECTORY}}"
 
 echo "Checking if Docker is running..."
 { docker info >/dev/null 2>&1; echo "Docker OK"; } || { echo "Docker is required and does not seem to be running - please start Docker and retry" ; exit 1; }
 
-echo "Checking for updated execution container image '${IMAGE_FULL_NAME}'"
-docker pull "${IMAGE_FULL_NAME}"
+if [ "${IMAGE_NO_PULL}" != true ]; then
+  echo "Checking for updated execution container image '${IMAGE_FULL_NAME}'"
+  docker pull "${IMAGE_FULL_NAME}"
+fi
 
 echo "Ensuring default credential paths are available in calling using profile for mounting to execution environment"
 for thisdir in ".aws" ".ssh" ".cdp" ".azure" ".kube" ".config" ".config/cloudera-deploy/log" ".config/cloudera-deploy/profiles"
