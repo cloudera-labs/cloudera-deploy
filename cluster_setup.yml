@@ -1,6 +1,6 @@
 ---
 
-# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+# Copyright 2022 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 # STARTBLOCK # Init run
 - name: Init Cluster Deployment Tasks
   hosts: localhost
-  tags: always
   gather_facts: no
   tasks:
     # TODO: Move to dependent roles with delegation if necessary
@@ -34,10 +33,11 @@
           state: directory
       loop_control:
         loop_var: __dir
+  tags:
+    - always
 
 - name: Check Inventory Connectivity
   hosts: all
-  tags: always
   gather_facts: no
   tasks:
     - name: Check connectivity to Inventory
@@ -45,6 +45,8 @@
 
     - name: Gather facts from connected inventory
       setup:
+  tags:
+    - always
 
 # ENDBLOCK # Init run
 # STARTBLOCK # Verify Inventory and Definition
@@ -529,48 +531,6 @@
     - full_cluster
 
 # ENDBLOCK # Setup HDFS Encryption
-# STARTBLOCK # Teardown
-# Teardown CA
 
-- name: Teardown CA server
-  hosts: ca_server
-  gather_facts: no
-  become: yes
-  tasks:
-    - ansible.builtin.include_role:
-        name: cloudera.cluster.infrastructure.ca_certs
-        tasks_from: clean.yml
-  tags:
-    - teardown_ca
-    - teardown_all
-    - never
-
-- name: Teardown security artifact directories
-  hosts: tls
-  gather_facts: no
-  become: yes
-  roles:
-    - role: cloudera.cluster.security.tls_clean
-      when: "'tls' in groups"
-  tags:
-    - teardown_tls
-    - teardown_all
-    - never
-
-# Teardown Cluster
-
-- name: Teardown
-  hosts: all
-  gather_facts: no
-  become: yes
-  any_errors_fatal: true
-  roles:
-    - cloudera.cluster.teardown
-  tags:
-    - teardown_cluster
-    - teardown_all
-    - never
-
-# ENDBLOCK # Teardown
 # End run
 ###

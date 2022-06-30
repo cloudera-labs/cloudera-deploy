@@ -1,6 +1,6 @@
 ---
 
-# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+# Copyright 2022 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,72 +14,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Primary entrypoint for all CDP Installations
+# Primary entrypoint for all CDP installations (Public Cloud, Private Cloud)
+#
+# There are five "core" runlevels:
+# - validate
+# - initialize
+# - infra
+# - plat
+# - run
+# - teardown
+#
+# In this context, 'run' means 'runtime' or 'application'. The platform level
+# is now both CDP Public Cloud SDX and Data Services, which is a change from
+# from before where 'plat' referred to the DL and SDX and 'run' referred to the
+# Data Services.
+# 
+# Individual Data Services (and Datahubs) should be tagged _within_ the 
+# 'cloudera.exe.*' roles themselves:
+# - de
+# - df
+# - dh
+# - dw
+# - ml
+# - opdb
 
-- name: Init Cloudera-Deploy Run
+- name: Establish Cloudera Deploy runlevels
   hosts: localhost
+  gather_facts: no
+  run_once: True
   tags: always
-  gather_facts: yes
   tasks:
-    - ansible.builtin.include_role:
-        name: cloudera_deploy
-        tasks_from: init
+    - ansible.builtin.import_role:
+        name: runlevels
 
-- name: Import the Cloud Interactions Playbook
-  import_playbook: cloud.yml
-
-- name: Teardown Cleanup
+- name: Initialize Cloudera Deploy parameters
   hosts: localhost
-  tags: [teardown,never]
   gather_facts: yes
-  tasks:
-    - name: Remove current Dynamic Inventory file from Definition Path if exists
-      ansible.builtin.include_role:
-        name: cloudera_deploy
-        tasks_from: clean_dynamic_inventory
-
-    - name: Remove Terraform remote state resources if requested
-      when:
-        - globals.infra_deployment_engine == 'terraform'
-        - globals.terraform.auto_remote_state | bool
-        - globals.terraform.state_storage in ['remote_s3']
-      ansible.builtin.include_role:
-        name: cloudera_deploy
-        tasks_from: auto_terraform_state
-
-- name: Prepare for Cloudera Cluster Run
-  hosts: localhost
   tags: always
-  gather_facts: yes
   tasks:
-    - name: Load Static Inventory file if present
-      when: mgmt is defined | bool
-      ansible.builtin.include_role:
-        name: cloudera_deploy
-        tasks_from: refresh_inventory
-      vars:
-        include_inventory_file: "{{ init__dynamic_inventory_artefact }}"
+    - ansible.builtin.import_role:  
+        name: initialize_parameters # Should/could be more granular
 
-    - name: Inject Download Mirror if requested
-      when:
-        - "'teardown' not in ansible_run_tags"
-        - "'cluster' in groups"
-      ansible.builtin.include_role:
-        name: cloudera_deploy
-        tasks_from: inject_download_mirror
+- ansible.builtin.import_playbook: "{{ [definition_path | default('default'), 'post_teardown.yml'] | path_join }}"
+  tags: ['never', 'plat', 'infra', 'teardown']
+  when: hostvars.localhost.run_infrastructure or hostvars.localhost.run_platform or hostvars.localhost.run_teardown
 
-    - name: Distribute Facts to Inventory Hosts
-      when:
-        - "'cluster' in groups"
-      ansible.builtin.include_role:
-        name: cloudera_deploy
-        tasks_from: distribute_facts_to_inventory
+- ansible.builtin.import_playbook: cloud_teardown.yml
+  tags: ['never', 'infra', 'teardown']
+  when: hostvars.localhost.run_infrastructure or hostvars.localhost.run_teardown
 
-- name: Import the Cluster Interactions Playbook
-  when:
-    - "'cluster' in groups"
-    - mgmt is defined | bool
-  import_playbook: cluster.yml
+- ansible.builtin.import_playbook: cluster_teardown.yml
+  tags: ['never', 'infra', 'teardown']
+  when: hostvars.localhost.run_infrastructure or hostvars.localhost.run_teardown
 
-- name: Execute the Application Playbook
-  import_playbook: "{{ [definition_path, 'application.yml'] | path_join }}"
+- ansible.builtin.import_playbook: "{{ [definition_path | default('default'), 'pre_setup.yml'] | path_join }}"
+  tags: ['run', 'plat', 'infra']
+  when: hostvars.localhost.run_infrastructure or hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+
+- ansible.builtin.import_playbook: cloud_setup.yml
+  tags: ['run', 'plat']
+  when: hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+
+- ansible.builtin.import_playbook: cluster_setup.yml
+  tags: ['run', 'plat']
+  when: hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+
+- ansible.builtin.import_playbook: "{{ [definition_path | default('default'), 'post_setup.yml'] | path_join }}"
+  tags: ['run']
+  when: hostvars.localhost.run_runtime
+
+- ansible.builtin.import_playbook: "{{ [definition_path | default('default'), 'pre_teardown.yml'] | path_join }}"
+  tags: ['never', 'teardown']
+  when: hostvars.localhost.run_teardown

@@ -1,0 +1,5 @@
+---
+
+- name: Default pre-deploy tear down
+  hosts: localhost
+  gather_facts: no

@@ -29,16 +29,14 @@
 
 - name: Log Runtime information
   ansible.builtin.debug:
-    msg: "{{ __runtime_item }}"
-  loop_control:
-    loop_var: __runtime_item
-  loop:
-    - "Ansible Version: {{ ansible_version }}"
-    - "Ansible Collections: {{ __ansible_collection_list.stdout }}"
-    - "Ansible Roles: {{ __ansible_role_list.stdout }}"
-    - "Python Version: {{ ansible_python_version }}"
-    - "Python Packages: {{ __python_env_packages.stdout }}"
-    - "Runner Version: '{{ lookup('env', 'CLDR_BUILD_VER') }}'"
+    msg:
+      - "Ansible Version: {{ ansible_version | to_yaml }}"
+      - "Ansible Collections: {{ __ansible_collection_list.stdout | to_nice_yaml }}"
+      - "Ansible Roles: {{ __ansible_role_list.stdout }}"
+      - "Python Version: {{ ansible_python_version }}"
+      - "Python Packages: {{ __python_env_packages.stdout }}"
+      - "Runner Version: '{{ lookup('env', 'CLDR_BUILD_VER') }}'"
+    verbosity: 1
 
 # Check path
 - name: Check a Definition path has been supplied
@@ -68,9 +66,6 @@
     init__user_profile: "{{ abs_profile | default([profile_path | default(default_profile_path), profile | default(default_profile_file)] | path_join ) }}"
     init__definition_file: "{{ abs_definition | default( [definition_path, definition_file | default(default_definition_file)] | path_join ) }}"
     init__cluster_file: "{{ abs_cluster | default( [definition_path, cluster_file | default(default_cluster_file)] | path_join ) }}"
-    init__dynamic_inventory_template: "{{ abs_template | default( [definition_path, inventory_template | default(default_inventory_template)] | path_join ) }}"
-    init__dynamic_inventory_artefact: "{{ abs_inventory | default( [definition_path, static_inventory | default(default_static_inventory) ] | path_join ) }}"
-    init__download_mirror_artefact: "{{ download_mirror_file | default(download_mirror_file) }}"
 
 # Handle User Config
 - name: Check for User Config file
@@ -216,7 +211,7 @@
 - name: Check supplied Namespace
   when:
     - globals.infra_type != 'azure'
-    - "'teardown' not in {{ ansible_run_tags }}"
+    - "'teardown' not in ansible_run_tags"
   ansible.builtin.assert:
     that:
       - globals.name_prefix | length > 1
@@ -230,6 +225,7 @@
     that:
       - globals.infra_deployment_engine in ['ansible', 'terraform']
     fail_msg: "The 'infra_deployment_engine' variable must be one of 'ansible', 'terraform'"
+    quiet: yes
     
 - name: Check Supplied terraform_base_dir variable
   when:
@@ -309,68 +305,7 @@
           - "SSH Private Key at {{ __private_key_file_stat.stat.path }} has invalid permissions"
           - "Permissions are {{ __private_key_file_stat.stat.mode }}"
           - "Permissions should be 0400 or 0600"
-
-# Parcel Distro
-- name: Determine preferred Parcel Distribution
-  ansible.builtin.set_fact:
-    init__parcel_distro: "{{ parcel_distro | default(default_parcel_distro) }}"
-
-# Read in Dynamic Inventory
-- name: Seek Inventory Template in Definition Path
-  register: __di_template_stat
-  ansible.builtin.stat:
-    path: "{{ init__dynamic_inventory_template }}"
-
-# inventory_dir is not defined when a user passes in an inventory with -i, so it is a useful check
-# No point loading Dynamic Inventory if we are not doing infrastructure in this run
-- name: Handle Dynamic Inventory Template
-  when:
-    - inventory_dir is defined
-    - __di_template_stat.stat.exists
-  block:
-    - name: Load in Dynamic Inventory Template
-      include_tasks: refresh_inventory.yml
-      vars:
-        include_inventory_file: "{{ __di_template_stat.stat.path }}"
-
-    - name: Print Dynamic Inventory groups to debug at Verbosity 3
-      debug:
-        msg: "{{ groups }}"
-        verbosity: 3
-
-    - name: Check expected minimum host groups appear in Inventory
-      ansible.builtin.assert:
         quiet: yes
-        that:
-          - groups.cluster is defined
-          - groups.cloudera_manager is defined
-        fail_msg: "Parsed Inventory Template did not contain minimum expected groups for a Cloudera Cluster deployment"
-
-    - name: Check a custom_repo is part of the cluster definition if using Download Mirror
-      when: use_download_mirror | default(default_enable_download_mirror) | bool
-      ansible.builtin.assert:
-        that: "'custom_repo' in groups"
-        fail_msg: "You must have a custom_repo in your Cluster Inventory when using Download Mirror"
-
-    - name: Extract list of hosts from Dynamic Inventory Template
-      when: groups.all | length > 0
-      ansible.builtin.set_fact:
-        __dynamic_inventory_host_list: "{{ groups.all | difference(['localhost']) }}"
-
-    - name: Set Dynamic Inventory host count in Globals
-      when: __dynamic_inventory_host_list | length > 0
-      ansible.builtin.set_fact:
-        globals: "{{ globals | default({}) | combine( __di_entry | default(omit), recursive=True ) }}"
-      loop_control:
-        loop_var: __di_entry
-      loop:
-        - dynamic_inventory:
-            vm:
-              count: "{{ __dynamic_inventory_host_list | count }}"
-              os: "{{ init__parcel_distro }}"
-  always:
-    - name: Remove Dynamic Inventory Template from current inventory
-      include_tasks: refresh_inventory.yml
 
 - name: Add no_log variables to globals
   no_log: true
@@ -385,15 +320,6 @@
     cloudera_manager_license_file: "{{ globals.cloudera_license_file | default(omit) }}"
     cloudera_manager_admin_password: "{{ globals.admin_password }}"
   no_log: true
-
-# Download Mirror
-- name: Prepare for Download Mirror Population if requested and necessary
-  when:
-    - use_download_mirror | default(default_enable_download_mirror) | bool
-    - "'teardown' not in ansible_run_tags"
-  ansible.builtin.include_role:
-    name: cloudera_deploy
-    tasks_from: prepare_download_mirror
 
 # Ansible tempfile doesn't appear to work well on ansible-runner
 - name: Set local Temp directory if not supplied
@@ -420,10 +346,10 @@
         AWS_PROFILE: "{{ globals.aws_profile | default(omit) }}"
         AWS_REGION: "{{ globals.region | default(omit) }}"
 
-- name: Print globals to debug at end of init (verbosity 3)
+- name: Print globals to debug at end of init (verbosity 1)
   ansible.builtin.debug:
     msg: "{{ globals }}"
-    verbosity: 3
+    verbosity: 1
 
 - name: Determine if Cloud Roles should be called
   ansible.builtin.set_fact:
@@ -438,46 +364,3 @@
     fail_msg: >-
       Admin Password must comply with CDP Public requirements: 1 Upper, 1 Special, 1 Number, 8-64 chars.
     quiet: yes
-
-# Provision Terraform remote state resources if requested
-- name: Initialize Terraform remote state resources
-  when:
-    - init__call_cloud_role | bool
-    - globals.infra_deployment_engine == 'terraform'
-    - globals.terraform.auto_remote_state | bool
-    - globals.terraform.state_storage in ['remote_s3']
-  block:
-    # Set resource variable names if not already done
-    - name: Set variables for remote state bucket if not set
-      when: (globals.terraform.remote_state_bucket is not defined) or
-            ( (globals.terraform.remote_state_bucket) | length == 0)
-      ansible.builtin.set_fact:
-        globals: "{{ globals | default({}) | combine(remote_state_vars, recursive=True) }}"
-      vars:
-        remote_state_vars:
-          terraform:
-            remote_state_bucket: "{{ [globals.name_prefix, 'state-bucket'] | join('-') }}"
-
-    - name: Set variables for remote state lock table if not set
-      when: (globals.terraform.remote_state_lock_table is not defined) or
-            (globals.terraform.remote_state_lock_table | length == 0)   
-      ansible.builtin.set_fact:
-        globals: "{{ globals | default({}) | combine(remote_state_vars, recursive=True) }}"
-      vars:
-        remote_state_vars:
-          terraform:
-            remote_state_lock_table: "{{ [globals.name_prefix, 'state-lock-table'] | join('-') }}"
-
-    - name: Create remote state resources
-      when: "'teardown' not in ansible_run_tags"
-      ansible.builtin.include_role:
-        name: cloudera_deploy
-        tasks_from: auto_terraform_state
-
-- name: Prepare for Download Mirror Population if requested and necessary
-  when:
-    - use_download_mirror | default(default_enable_download_mirror) | bool
-    - "'teardown' not in ansible_run_tags"
-  ansible.builtin.include_role:
-    name: cloudera_deploy
-    tasks_from: prepare_download_mirror

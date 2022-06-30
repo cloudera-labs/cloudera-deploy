@@ -25,7 +25,7 @@ default_ssh_key_suffix: _ssh_rsa
 default_download_mirror_prefix: cache
 
 # Default Basic Cluster Config
-default_cluster_definition_file: "defaults/basic_cluster.yml"
+default_cluster_definition_file: "basic_cluster.yml"
 
 # Default Artefact Filenames
 default_profile_path: "{{ [default_config_path, 'profiles'] | path_join }}"

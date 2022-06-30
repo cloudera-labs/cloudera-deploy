@@ -1,5 +1,14 @@
 ---
 
+# Download Mirror
+#- name: Prepare for Download Mirror Population if requested and necessary
+#  when:
+#    - use_download_mirror | default(default_enable_download_mirror) | bool
+#    - "'teardown' not in ansible_run_tags"
+#  ansible.builtin.include_role:
+#    name: cloudera_deploy
+#    tasks_from: prepare_download_mirror
+
 # Copyright 2021 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

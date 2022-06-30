@@ -1,0 +1,5 @@
+---
+
+- name: Default pre-deploy set up
+  hosts: localhost
+  gather_facts: no

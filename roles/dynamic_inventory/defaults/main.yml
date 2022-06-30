@@ -1,0 +1,5 @@
+---
+
+init__dynamic_inventory_template: "{{ abs_template | default( [definition_path, inventory_template | default(default_inventory_template)] | path_join ) }}"
+init__dynamic_inventory_artefact: "{{ abs_inventory | default( [definition_path, static_inventory | default(default_static_inventory) ] | path_join ) }}"
+init__download_mirror_artefact: "{{ download_mirror_file | default(download_mirror_file) }}"

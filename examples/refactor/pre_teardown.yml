@@ -1,0 +1,18 @@
+---
+
+- name: Example pre-deploy tear down
+  hosts: localhost
+  gather_facts: no
+  tasks:
+
+    # Inherits 'teardown' and 'never' from playbook import
+
+    - name: Initialize Infrastructure teardown
+      ansible.builtin.import_role:
+        name: cloudera.exe.infrastructure
+        tasks_from: initialize_teardown
+
+    - name: Tear down Infrastructure
+      ansible.builtin.include_role:
+        name: cloudera.exe.infrastructure
+        tasks_from: teardown
