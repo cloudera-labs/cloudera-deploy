@@ -19,6 +19,11 @@
 df:
   readyflows:
     - flow_name: "Kafka to Kafka"
+#  customflows:
+#    - flow_name: test
+#      file: '/runner/project/cloudera-deploy/000-abc1-version-1.json'
+#      description: test
+#      comments: test
 #  min_k8s_nodes: 3
 #  max_k8s_nodes: 5
 #  public_loadbalancer: True
