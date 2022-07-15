@@ -217,18 +217,6 @@
 # ENDBLOCK # Create Cluster Service Infrastructure
 # STARTBLOCK # Prepare TLS
 
-- name: Fetch CA certificates
-  hosts: ca_server
-  become: yes
-  gather_facts: no
-  tasks:
-    - ansible.builtin.include_role:
-        name: cloudera.cluster.infrastructure.ca_certs
-        tasks_from: fetch.yml
-  tags:
-    - fetch_ca
-    - full_cluster
-
 - name: Build TLS keystores and truststores
   hosts: tls
   become: yes
