@@ -1,0 +1,50 @@
+---
+
+# Copyright 2022 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Tear down CDP Public Cloud
+  hosts: localhost
+  environment: "{{ globals.env_vars }}"
+  gather_facts: yes
+  tasks:
+
+# Inherits 'infra', 'teardown', and 'never' from the playbook import
+# Does not apply other tags via the role imports
+# By using imports vs includes for roles, we can propagate
+# tags via --list-tags
+
+# TODO Need to propagate 'ml', 'dw', etc. to selected tasks within the roles, 
+# including those that would otherwise be 'always' - in this context; 'always'
+# should be reserved for the initialization of cloudera-deploy
+        
+    - name: Initialize Data Services teardown
+      ansible.builtin.import_role:
+        name: cloudera.exe.runtime
+        tasks_from: initialize_teardown
+
+    - name: Tear down Data Services
+      ansible.builtin.import_role:
+        name: cloudera.exe.runtime
+        tasks_from: teardown
+
+    - name: Initialize Platform teardown
+      ansible.builtin.import_role:
+        name: cloudera.exe.platform
+        tasks_from: initialize_teardown
+
+    - name: Tear down Platform
+      ansible.builtin.import_role:
+        name: cloudera.exe.platform
+        tasks_from: teardown

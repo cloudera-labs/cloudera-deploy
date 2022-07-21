@@ -1,0 +1,104 @@
+---
+
+# Copyright 2022 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This Playbook is specifically for Deploying Cloudera Clusters
+# Edit with extreme caution
+# This plays are imported from a separate playbook so that Ansible tags are intuitively propagated from main.yml
+
+# STARTBLOCK # Init run
+- name: Init PvC Base Deployment Tasks
+  hosts: localhost
+  gather_facts: yes
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+      when: init__completed is undefined
+  tags:
+    - always
+
+- name: Check Inventory Connectivity
+  hosts: all
+  gather_facts: no
+  tasks:
+    - ansible.builtin.wait_for_connection:
+  tags:
+    - always
+
+# ENDBLOCK # Init run
+ # STARTBLOCK # PVC Setup
+- name: Post-Install for PvC on all cluster hosts
+  hosts: cloudera_manager, cluster, ecs_nodes
+  gather_facts: yes
+  tags:
+    - pvc
+  tasks:
+    - name: Add missing ExtJS for Oozie UI
+      include_role:
+        name: cloudera.cluster.config.services.oozie_ui
+      when: oozie_service_exists | default(false)
+
+- name: Post-Install Cloudera Manager and Cluster
+  hosts: cloudera_manager
+  gather_facts: yes
+  tags:
+    - pvc
+  tasks:
+    - name: Refresh CM Services Info
+      include_role:
+        name: cloudera.cluster.cloudera_manager.services_info
+        public: yes
+
+    - name: Fix Hue ticket lifetime for Free IPA
+      include_role:
+        name: cloudera.cluster.config.services.hue_ticket_lifetime
+      when:
+        - hue_service_exists | default(false)
+        - krb5_kdc_type == 'Red Hat IPA'
+
+    - name: Set Cloudera Manager session timeout to 30d
+      include_role:
+        name: cloudera.cluster.cloudera_manager.session_timeout
+
+    - name: Create missing Solr plugin for Ranger
+      include_role:
+        name: cloudera.cluster.config.services.solr_ranger_plugin
+      when:
+        - ranger_service_exists | default(false)
+        - solr_service_exists | default(false)
+
+    - name: Add Solr urls to Knox
+      include_role:
+        name: cloudera.cluster.config.services.solr_knox
+      when: knox_service_exists | default(false) and solr_service_exists | default(false)
+
+    - name: Add missing TLS values for KMS
+      when:
+        - kms_service_exists | default(False)
+        - (autotls | default(False))
+      include_role:
+        name: cloudera.cluster.config.services.kms_tls
+
+    - name: Ranger extra policies to have enough rights with basic accounts
+      when: ranger_service_exists | default(false)
+      include_role:
+        name: cloudera.cluster.config.services.ranger_pvc_default_policies
+
+
+# ENDBLOCK # PVC Setup
+
+# End run
+###
