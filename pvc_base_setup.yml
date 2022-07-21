@@ -19,20 +19,20 @@
 # This plays are imported from a separate playbook so that Ansible tags are intuitively propagated from main.yml
 
 # STARTBLOCK # Init run
-- name: Init Cluster Deployment Tasks
+- name: Init PvC Base Deployment Tasks
   hosts: localhost
-  gather_facts: no
+  gather_facts: yes
   tasks:
-    # TODO: Move to dependent roles with delegation if necessary
-    - name: Create local temp directories
-      file: "{{ __dir }}"
-      loop:
-        - path: "{{ local_temp_dir }}/csrs"
-          state: directory
-        - path: "{{ local_temp_dir }}/certs"
-          state: directory
-      loop_control:
-        loop_var: __dir
+    - ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+      when: init__completed is undefined
+
+    - name: Prepare inventory for PvC Plays
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+        tasks_from: prep_pvc.yml
   tags:
     - always
 
@@ -42,9 +42,6 @@
   tasks:
     - name: Check connectivity to Inventory
       ansible.builtin.wait_for_connection:
-
-    - name: Gather facts from connected inventory
-      setup:
   tags:
     - always
 
@@ -108,7 +105,7 @@
 # STARTBLOCK # Prepare Nodes
 
 - name: Apply OS pre-requisite configurations
-  hosts: cloudera_manager, cluster, ca_server
+  hosts: cloudera_manager, cluster, ca_server, ecs_nodes
   become: yes
   roles:
     - cloudera.cluster.prereqs.os
@@ -117,8 +114,26 @@
     - default_cluster
     - full_cluster
 
+- name: Apply OS Prereqs to ECS Nodes
+  hosts: ecs_nodes
+  gather_facts: yes
+  become: yes
+  tags:
+    - pvc
+    - os
+    - default_cluster
+    - full_cluster
+  tasks:
+    - name: Setup iptables or nftables
+      ansible.builtin.include_role:
+        name: cloudera.cluster.prereqs.iptables
+
+    - name: Create user accounts for ECS nodes
+      ansible.builtin.include_role:
+        name: cloudera.cluster.prereqs.user_accounts_ecs
+
 - name: Create local user accounts
-  hosts: cloudera_manager, cluster, tls
+  hosts: cloudera_manager, cluster
   become: yes
   gather_facts: no
   roles:
@@ -128,18 +143,36 @@
     - default_cluster
     - full_cluster
 
+- name: Create local users on ECS Nodes
+  hosts: ecs_nodes
+  gather_facts: yes
+  tags:
+    - pvc
+    - users
+    - default_cluster
+    - full_cluster
+  tasks:
+    - name: Create user accounts for ECS nodes
+      ansible.builtin.include_role:
+        name: cloudera.cluster.prereqs.user_accounts_ecs
+
 - name: Install JDK
-  hosts: cloudera_manager, cluster, tls
+  hosts: cloudera_manager, cluster, tls, krb5_server, ecs_nodes
   become: yes
   roles:
     - cloudera.cluster.prereqs.jdk
   tags:
     - jdk
+    - security
+    - free_ipa
+    - kerberos
+    - tls
     - default_cluster
     - full_cluster
 
+# DB Connectors
 - name: Install MySQL Connector
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   gather_facts: no
   become: yes
   roles:
@@ -150,7 +183,7 @@
     - full_cluster
 
 - name: Install Oracle Connector
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   gather_facts: no
   become: yes
   roles:
@@ -160,21 +193,23 @@
     - oracle_connector
     - full_cluster
 
-- name: Install PostgreSQL Connector
-  hosts: cloudera_manager, cluster
-  gather_facts: no
+# ENDBLOCK # Prepare Nodes
+# STARTBLOCK # Install Cluster Service Infrastructure II
+
+- name: Install RDBMS
+  hosts: db_server
   become: yes
   roles:
-    - role: cloudera.cluster.prereqs.postgresql_connector
-      when: database_type == 'postgresql'
+    - cloudera.cluster.infrastructure.rdbms
   tags:
-    - postgresql_connector
+    - database
+    - default_cluster
     - full_cluster
 
-# ENDBLOCK # Prepare Nodes
+# ENDBLOCK # Install Cluster Service Infrastructure II
 # STARTBLOCK # Create Cluster Service Infrastructure
 
-- name: Install KDC
+- name: Install Kerberos Server
   hosts: krb5_server
   become: yes
   roles:
@@ -182,11 +217,12 @@
   tags:
     - security
     - kerberos
+    - free_ipa
     - tls
     - full_cluster
 
 - name: Setup KRB5 clients
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   become: yes
   roles:
     - role: cloudera.cluster.infrastructure.krb5_client
@@ -194,6 +230,7 @@
   tags:
     - security
     - kerberos
+    - free_ipa
     - tls
     - full_cluster
 
@@ -251,17 +288,6 @@
     - always
 
 # ENDBLOCK # Prepare TLS
-# STARTBLOCK # Install Cluster Service Infrastructure II
-- name: Install RDBMS
-  hosts: db_server
-  become: yes
-  roles:
-    - cloudera.cluster.infrastructure.rdbms
-  tags:
-    - database
-    - default_cluster
-    - full_cluster
-# ENDBLOCK # Install Cluster Service Infrastructure II
 # STARTBLOCK # NiFi TLS
 
 - name: Setup symlinks for NiFi TLS keystore and truststore
@@ -279,7 +305,7 @@
 # STARTBLOCK # Install Cloudera Manager
 
 - name: Install Cloudera Manager daemons
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   become: yes
   any_errors_fatal: true
   roles:
@@ -311,7 +337,7 @@
     - full_cluster
 
 - name: Install Cloudera Manager agents
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   become: yes
   any_errors_fatal: true
   roles:
@@ -334,7 +360,7 @@
     - full_cluster
 
 - name: Configure Cloudera Manager agents
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   become: yes
   any_errors_fatal: true
   roles:
@@ -364,6 +390,9 @@
     - cm
     - full_cluster
 
+# ENDBLOCK # Install Cloudera Manager
+# STARTBLOCK # Cloudera Manager Password
+
 - name: Configure Cloudera Manager Password
   hosts: cloudera_manager
   gather_facts: no
@@ -373,9 +402,6 @@
     - cm
     - default_cluster
     - full_cluster
-
-# ENDBLOCK # Install Cloudera Manager
-# STARTBLOCK # Cloudera Manager Password
 
 - name: Check Cloudera Manager admin password
   hosts: cloudera_manager, cluster
@@ -389,18 +415,19 @@
 
 # ENDBLOCK # Cloudera Manager Password
 # STARTBLOCK # Prepare Security
-# Insert AutoTLS with tag
+
 - name: Enable Auto-TLS
   hosts: cloudera_manager
   gather_facts: no
   roles:
-    - cloudera.cluster.cloudera_manager.autotls
+    - role: cloudera.cluster.cloudera_manager.autotls
+      when: autotls is defined and autotls == True
   tags:
     - autotls
-    - never
+    - full_cluster
 
 - name: Install pre-requisite packages for Kerberos
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   become: yes
   roles:
     - role: cloudera.cluster.prereqs.kerberos
@@ -421,14 +448,17 @@
     - full_cluster
 
 # ENDBLOCK # Prepare Security
-# STARTBLOCK # Install Cluster
+# STARTBLOCK # Configure CM
 
 - name: Restart Cloudera Manager Agents
   hosts: cloudera_manager, cluster
   gather_facts: no
   become: yes
-  roles:
-    - role: cloudera.cluster.operations.restart_agents
+  tasks:
+    - name: Restart Cloudera Manager Agents
+      meta: noop
+      notify:
+        - restart cloudera-scm-agent
   tags:
     - never
     - restart_agents
@@ -467,6 +497,9 @@
     - default_cluster
     - full_cluster
 
+# ENDBLOCK # Configure CM
+# STARTBLOCK # Install Cluster
+
 - name: Deploy clusters
   hosts: cloudera_manager
   gather_facts: no
@@ -478,6 +511,19 @@
     - full_cluster
 
 # ENDBLOCK # Install Cluster
+# STARTBLOCK # Fix Auto-TLS
+
+- name: Auto-TLS Services Setup
+  hosts: cloudera_manager
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.cloudera_manager.cms_tls
+      when: autotls is defined and autotls == True
+  tags:
+    - autotls
+    - never
+
+# ENDBLOCK # Fix Auto-TLS
 # STARTBLOCK # Setup HDFS Encryption
 
 - name: Setup KTS HA
@@ -530,7 +576,36 @@
     - restart_stale
     - full_cluster
 
-# ENDBLOCK # Setup HDFS Encryption
+ # ENDBLOCK # Setup HDFS Encryption
+ # STARTBLOCK # PVC Setup
+
+- name: Prepare Hosts for PvC Setup
+  hosts: cloudera_manager, cluster, ecs_nodes
+  gather_facts: yes
+  tags:
+    - pvc
+  tasks:
+    - name: Add missing ExtJS for Oozie UI
+      include_role:
+        name: cloudera.cluster.config.services.oozie_ui
+      when: oozie_service_exists | default(false)
+
+- name: Handle WXM Setup
+  hosts: "{{ tp_host | default('cluster_master_nodes[0]') }}"
+  gather_facts: yes
+  tags:
+    - wxm
+    - full_cluster
+  tasks:
+    - name: Setup WXM
+      when:
+        - use_wxm | default(False)
+        - altus_key_id | length > 0
+        - altus_private_key | length > 0
+      import_role:
+        name: cloudera.cluster.deployment.services.wxm
+
+# ENDBLOCK # PVC Setup
 
 # End run
 ###

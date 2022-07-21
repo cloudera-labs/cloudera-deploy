@@ -25,7 +25,7 @@
 # - teardown
 #
 # In this context, 'run' means 'runtime' or 'application'. The platform level
-# is now both CDP Public Cloud SDX and Data Services, which is a change from
+# is now both CDP Public Cloud SDX and Data Services, which is a change
 # from before where 'plat' referred to the DL and SDX and 'run' referred to the
 # Data Services.
 # 
@@ -38,51 +38,54 @@
 # - ml
 # - opdb
 
-- name: Establish Cloudera Deploy runlevels
+- name: Initialize Cloudera Deploy Run
   hosts: localhost
-  gather_facts: no
-  run_once: True
-  tags: always
-  tasks:
-    - ansible.builtin.import_role:
-        name: runlevels
-
-- name: Initialize Cloudera Deploy parameters
-  hosts: localhost
+  connection: local
   gather_facts: yes
   tags: always
   tasks:
-    - ansible.builtin.import_role:  
-        name: initialize_parameters # Should/could be more granular
+    - ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+      when: init__completed is undefined
 
-- ansible.builtin.import_playbook: "{{ [definition_path | default('default'), 'post_teardown.yml'] | path_join }}"
-  tags: ['never', 'plat', 'infra', 'teardown']
-  when: hostvars.localhost.run_infrastructure or hostvars.localhost.run_platform or hostvars.localhost.run_teardown
+- ansible.builtin.import_playbook: "{{ [definition_path, 'pre_teardown.yml'] | path_join }}"
+  when:
+    - hostvars.localhost.run_infrastructure or hostvars.localhost.run_platform or hostvars.localhost.run_teardown
 
-- ansible.builtin.import_playbook: cloud_teardown.yml
-  tags: ['never', 'infra', 'teardown']
-  when: hostvars.localhost.run_infrastructure or hostvars.localhost.run_teardown
+- ansible.builtin.import_playbook: pbc_teardown.yml
+  when:
+    - hostvars.localhost.run_infrastructure or hostvars.localhost.run_teardown
+    - hostvars.localhost.init__call_cdp_pbc == True
 
-- ansible.builtin.import_playbook: cluster_teardown.yml
-  tags: ['never', 'infra', 'teardown']
-  when: hostvars.localhost.run_infrastructure or hostvars.localhost.run_teardown
+- ansible.builtin.import_playbook: pvc_base_teardown.yml
+  when:
+    - hostvars.localhost.run_infrastructure or hostvars.localhost.run_teardown
+    - hostvars.localhost.init__call_cdp_pvc == True
 
-- ansible.builtin.import_playbook: "{{ [definition_path | default('default'), 'pre_setup.yml'] | path_join }}"
-  tags: ['run', 'plat', 'infra']
-  when: hostvars.localhost.run_infrastructure or hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+- ansible.builtin.import_playbook: "{{ [definition_path, 'pre_setup.yml'] | path_join }}"
+  when:
+    - hostvars.localhost.run_infrastructure or hostvars.localhost.run_platform or hostvars.localhost.run_runtime
 
-- ansible.builtin.import_playbook: cloud_setup.yml
-  tags: ['run', 'plat']
-  when: hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+- ansible.builtin.import_playbook: pbc_setup.yml
+  when:
+    - hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+    - hostvars.localhost.init__call_cdp_pbc == True
 
-- ansible.builtin.import_playbook: cluster_setup.yml
-  tags: ['run', 'plat']
-  when: hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+- ansible.builtin.import_playbook: pvc_base_setup.yml
+  when:
+    - hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+    - hostvars.localhost.init__call_cdp_pvc == True
 
-- ansible.builtin.import_playbook: "{{ [definition_path | default('default'), 'post_setup.yml'] | path_join }}"
-  tags: ['run']
-  when: hostvars.localhost.run_runtime
+- ansible.builtin.import_playbook: pvc_cp_setup.yml
+  when:
+    - hostvars.localhost.run_pvc
+    - hostvars.localhost.init__call_cdp_pvc == True
 
-- ansible.builtin.import_playbook: "{{ [definition_path | default('default'), 'pre_teardown.yml'] | path_join }}"
-  tags: ['never', 'teardown']
-  when: hostvars.localhost.run_teardown
+- ansible.builtin.import_playbook: "{{ [definition_path, 'post_setup.yml'] | path_join }}"
+  when:
+    - hostvars.localhost.run_runtime
+
+- ansible.builtin.import_playbook: "{{ [definition_path, 'post_teardown.yml'] | path_join }}"
+  when:
+    - hostvars.localhost.run_teardown

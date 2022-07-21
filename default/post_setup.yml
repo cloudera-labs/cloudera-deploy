@@ -1,5 +1,0 @@
----
-
-- name: Default post-deploy set up
-  hosts: localhost
-  gather_facts: no
