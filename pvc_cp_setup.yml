@@ -27,6 +27,12 @@
         name: cloudera.exe.init_deployment
         public: yes
       when: init__completed is undefined
+
+    - name: Prepare inventory for PvC Plays
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+        tasks_from: prep_pvc.yml
   tags:
     - always
 
@@ -34,7 +40,8 @@
   hosts: all
   gather_facts: no
   tasks:
-    - ansible.builtin.wait_for_connection:
+    - name: Check connectivity to Inventory
+      ansible.builtin.wait_for_connection:
   tags:
     - always
 
@@ -98,6 +105,7 @@
         name: cloudera.cluster.config.services.ranger_pvc_default_policies
 
 
+ # TODO: May need to include role to setup dnsmasq for ECS test clusters. prereqs/pvc_ecs & pvc_ecs_dns
 # ENDBLOCK # PVC Setup
 
 # End run

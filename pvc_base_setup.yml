@@ -126,7 +126,7 @@
   tasks:
     - name: Setup iptables or nftables
       ansible.builtin.include_role:
-        name: cloudera.cluster.prereqs.iptables
+        name: cloudera.cluster.prereqs.pvc_ecs
 
     - name: Create user accounts for ECS nodes
       ansible.builtin.include_role:
@@ -502,7 +502,7 @@
 
 - name: Deploy clusters
   hosts: cloudera_manager
-  gather_facts: no
+  gather_facts: yes
   roles:
     - cloudera.cluster.deployment.cluster
   tags:
