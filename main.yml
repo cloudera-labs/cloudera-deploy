@@ -72,14 +72,24 @@
     - hostvars.localhost.run_platform or hostvars.localhost.run_runtime
     - hostvars.localhost.init__call_cdp_pbc == True
 
+- ansible.builtin.import_playbook: pvc_base_prereqs_ext.yml
+  when:
+    - hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+    - hostvars.localhost.init__call_cdp_pvc == True
+
+- ansible.builtin.import_playbook: pvc_base_prereqs_int.yml
+  when:
+    - hostvars.localhost.run_platform or hostvars.localhost.run_runtime
+    - hostvars.localhost.init__call_cdp_pvc == True
+
 - ansible.builtin.import_playbook: pvc_base_setup.yml
   when:
     - hostvars.localhost.run_platform or hostvars.localhost.run_runtime
     - hostvars.localhost.init__call_cdp_pvc == True
 
-- ansible.builtin.import_playbook: pvc_cp_setup.yml
+- ansible.builtin.import_playbook: pvc_base_postfix.yml
   when:
-    - hostvars.localhost.run_pvc
+    - hostvars.localhost.run_platform or hostvars.localhost.run_runtime
     - hostvars.localhost.init__call_cdp_pvc == True
 
 - ansible.builtin.import_playbook: "{{ [definition_path, 'post_setup.yml'] | path_join }}"
