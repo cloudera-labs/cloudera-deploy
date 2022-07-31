@@ -14,6 +14,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# STARTBLOCK # Init run
+- name: Init run tasks for Ansible Controller
+  hosts: localhost
+  gather_facts: yes
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+      when: init__completed is undefined
+
+    - name: Prepare inventory for PvC Plays
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+        tasks_from: prep_pvc.yml
+  tags:
+    - always
+
+- name: Init run tasks for all nodes
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Group hosts by host template and TLS
+      ansible.builtin.include_role:
+        name: cloudera.cluster.deployment.groupby
+
+    - name: Check connectivity to Inventory
+      ansible.builtin.wait_for_connection:
+  tags:
+    - always
+# ENDBLOCK # Init run
+
 # STARTBLOCK # Teardown
 # Teardown CA
 
@@ -40,7 +72,20 @@
 
 # Teardown Cluster
 
-- name: Teardown
+- name: Teardown ECS
+  hosts: ecs_nodes
+  gather_facts: no
+  become: yes
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera.cluster.teardown
+        tasks_from: teardown_ecs.yml
+      vars:
+        cluster: "{{ definition.clusters | selectattr('type', 'defined') | selectattr('type', 'search', 'ecs') | first }}"
+  tags:
+    - teardown_ecs
+
+- name: Cluster Teardown Process
   hosts: all
   gather_facts: no
   become: yes
