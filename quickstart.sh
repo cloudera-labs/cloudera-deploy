@@ -138,7 +138,7 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
       /usr/bin/env bash
 
     echo "Installing the cloudera-deploy project to the execution container '${CONTAINER_NAME}'"
-    docker exec -td "${CONTAINER_NAME}" /usr/bin/env git clone https://github.com/cloudera-labs/cloudera-deploy.git /opt/cloudera-deploy --depth 1
+    docker exec -td "${CONTAINER_NAME}" /usr/bin/env git clone https://github.com/clevesque/cloudera-deploy.git /opt/cloudera-deploy --depth 1
 
     if [ -n "${CLDR_COLLECTION_PATH}" ]; then
       docker exec -td "${CONTAINER_NAME}" /usr/bin/env rm -rf /opt/cldr-runner/collections/ansible_collections/cloudera
