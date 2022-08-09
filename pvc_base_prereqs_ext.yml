@@ -166,43 +166,6 @@
     - default_cluster
     - full_cluster
 
-# DB Connectors
-- name: Install MySQL Connector
-  hosts: cloudera_manager, cluster, ecs_nodes
-  gather_facts: no
-  become: yes
-  roles:
-    - role: cloudera.cluster.prereqs.mysql_connector
-      when: database_type == 'mysql' or database_type == 'mariadb'
-  tags:
-    - mysql_connector
-    - full_cluster
-
-- name: Install Oracle Connector
-  hosts: cloudera_manager, cluster, ecs_nodes
-  gather_facts: no
-  become: yes
-  roles:
-    - role: cloudera.cluster.prereqs.oracle_connector
-      when: database_type == 'oracle'
-  tags:
-    - oracle_connector
-    - full_cluster
-
-# ENDBLOCK # Prepare Nodes
-# STARTBLOCK # Install Cluster Service Infrastructure II
-
-- name: Install RDBMS
-  hosts: db_server
-  become: yes
-  roles:
-    - cloudera.cluster.infrastructure.rdbms
-  tags:
-    - database
-    - default_cluster
-    - full_cluster
-
-# ENDBLOCK # Install Cluster Service Infrastructure II
 # STARTBLOCK # Create Cluster Service Infrastructure
 
 - name: Install Kerberos Server
@@ -242,16 +205,6 @@
     - tls
     - full_cluster
 
-- name: Install HAProxy
-  hosts: haproxy
-  become: yes
-  roles:
-    - cloudera.cluster.infrastructure.haproxy
-  tags:
-    - ha
-    - full_cluster
-
-# ENDBLOCK # Create Cluster Service Infrastructure
 # STARTBLOCK # Prepare TLS
 
 - name: Build TLS keystores and truststores
@@ -298,5 +251,52 @@
         (tls | default(False)
         or manual_tls_cert_distribution | default(False))
         and not (autotls | default(False))
-
 # ENDBLOCK # NiFi TLS
+# DB Connectors
+- name: Install MySQL Connector
+  hosts: cloudera_manager, cluster, ecs_nodes
+  gather_facts: no
+  become: yes
+  roles:
+    - role: cloudera.cluster.prereqs.mysql_connector
+      when: database_type == 'mysql' or database_type == 'mariadb'
+  tags:
+    - mysql_connector
+    - full_cluster
+
+- name: Install Oracle Connector
+  hosts: cloudera_manager, cluster, ecs_nodes
+  gather_facts: no
+  become: yes
+  roles:
+    - role: cloudera.cluster.prereqs.oracle_connector
+      when: database_type == 'oracle'
+  tags:
+    - oracle_connector
+    - full_cluster
+
+# ENDBLOCK # Prepare Nodes
+# STARTBLOCK # Install Cluster Service Infrastructure II
+
+- name: Install RDBMS
+  hosts: db_server
+  become: yes
+  roles:
+    - cloudera.cluster.infrastructure.rdbms
+  tags:
+    - database
+    - default_cluster
+    - full_cluster
+
+# ENDBLOCK # Install Cluster Service Infrastructure II
+
+- name: Install HAProxy
+  hosts: haproxy
+  become: yes
+  roles:
+    - cloudera.cluster.infrastructure.haproxy
+  tags:
+    - ha
+    - full_cluster
+
+# ENDBLOCK # Create Cluster Service Infrastructure
