@@ -19,5 +19,5 @@ datahub:
     - include: "datahub_streams_messaging_light.j2"
 
 use_default_cluster_definition: yes
-use_download_mirror: yes
+use_auto_repo_mirror: yes
 preload_cm_parcel_repo: yes
