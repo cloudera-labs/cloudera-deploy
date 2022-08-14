@@ -63,7 +63,7 @@
 
 - name: Verify definition [verify_definition]
   hosts: cloudera_manager
-  gather_facts: no
+  gather_facts: yes
   roles:
     - cloudera.cluster.verify.definition
   tags:
