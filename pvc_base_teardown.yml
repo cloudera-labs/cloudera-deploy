@@ -31,19 +31,6 @@
         tasks_from: prep_pvc.yml
   tags:
     - always
-
-- name: Init run tasks for all nodes
-  hosts: all
-  gather_facts: no
-  tasks:
-    - name: Group hosts by host template and TLS
-      ansible.builtin.include_role:
-        name: cloudera.cluster.deployment.groupby
-
-    - name: Check connectivity to Inventory
-      ansible.builtin.wait_for_connection:
-  tags:
-    - always
 # ENDBLOCK # Init run
 
 # STARTBLOCK # Teardown
