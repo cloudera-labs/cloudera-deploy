@@ -122,10 +122,6 @@
       ansible.builtin.include_role:
         name: cloudera.cluster.prereqs.pvc_ecs
 
-    - name: Create user accounts for ECS nodes
-      ansible.builtin.include_role:
-        name: cloudera.cluster.prereqs.user_accounts_ecs
-
 - name: Create local user accounts
   hosts: cloudera_manager, cluster
   become: yes
@@ -149,8 +145,6 @@
     - name: Create user accounts for ECS nodes
       ansible.builtin.include_role:
         name: cloudera.cluster.prereqs.user_accounts_ecs
-
-# TODO: add pvc tag to all ecs_nodes plays
 
 - name: Install JDK
   hosts: cloudera_manager, cluster, tls, krb5_server, ecs_nodes
