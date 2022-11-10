@@ -14,9 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+- name: Load Definition file
+  ansible.builtin.include_vars:
+    file: "{{ init__cluster_definition_file }}"
+    name: _pre_template_cluster
+  delegate_to: "{{ __play_host }}"
+  delegate_facts: true
+  loop: "{{ groups.all }}"
+  loop_control:
+    loop_var: __play_host
+    label: __play_host
+
 - name: Set specific Facts for later use in Cluster Deployment
   ansible.builtin.set_fact:
-    _pre_template_cluster: "{{ lookup('file', init__cluster_definition_file ) | from_yaml }}"
     preload_parcels: "{{ download_mirror_file_list | default([]) }}"
     custom_repo_rehost_files: "{{ download_mirror_file_list | default([]) }}"
   delegate_to: "{{ __play_host }}"
