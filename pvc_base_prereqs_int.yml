@@ -118,7 +118,7 @@
     - full_cluster
 
 - name: Configure Cloudera Manager server
-  hosts: localhost
+  hosts: cloudera_manager
   gather_facts: no
   roles:
     - cloudera.cluster.cloudera_manager.config
@@ -178,7 +178,7 @@
   become: yes
   roles:
     - role: cloudera.cluster.prereqs.kerberos
-      when: krb5_kdc_host is defined or 'krb5_server' in groups
+      when: "'krb5_server' in groups"  # Only set up if cloudera.cluster has itself provisioned Kerberos
   tags:
     - kerberos
     - prereqs
@@ -223,7 +223,7 @@
     - full_cluster
 
 - name: Deploy Cloudera Management Service
-  hosts: localhost
+  hosts: cloudera_manager
   gather_facts: no
   roles:
     - cloudera.cluster.deployment.services.mgmt

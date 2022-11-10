@@ -63,7 +63,7 @@
 
 - name: Verify definition [verify_definition]
   hosts: cloudera_manager
-  gather_facts: no
+  gather_facts: yes
   roles:
     - cloudera.cluster.verify.definition
   tags:
@@ -86,7 +86,7 @@
 # Moved from verify_parcels to reduce duplication
 - name: Verify definition [verify_parcels_and_roles]
   hosts: cloudera_manager
-  gather_facts: no
+  gather_facts: yes
   roles:
     - cloudera.cluster.verify.parcels_and_roles
   tags:
@@ -190,19 +190,6 @@
     - full_cluster
 
 # ENDBLOCK # Prepare Nodes
-# STARTBLOCK # Install Cluster Service Infrastructure II
-
-- name: Install RDBMS
-  hosts: db_server
-  become: yes
-  roles:
-    - cloudera.cluster.infrastructure.rdbms
-  tags:
-    - database
-    - default_cluster
-    - full_cluster
-
-# ENDBLOCK # Install Cluster Service Infrastructure II
 # STARTBLOCK # Create Cluster Service Infrastructure
 
 - name: Install Kerberos Server
@@ -300,3 +287,16 @@
         and not (autotls | default(False))
 
 # ENDBLOCK # NiFi TLS
+# STARTBLOCK # Install Cluster Service Infrastructure II
+
+- name: Install RDBMS
+  hosts: db_server
+  become: yes
+  roles:
+    - cloudera.cluster.infrastructure.rdbms
+  tags:
+    - database
+    - default_cluster
+    - full_cluster
+
+# ENDBLOCK # Install Cluster Service Infrastructure II
