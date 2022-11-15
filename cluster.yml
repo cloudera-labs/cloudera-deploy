@@ -352,6 +352,33 @@
     - default_cluster
     - full_cluster
 
+- name: Configure Cloudera Manager hosts config
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.cloudera_manager.hosts_config
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
+- name: Restart agents if the parcel directory has been changed
+  hosts: cloudera_manager, cluster
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.operations.restart_agents
+      when:
+        - definition.hosts.configs is defined
+        - "'parcels_directory' in definition.hosts.configs"
+    - role: cloudera.cluster.cloudera_manager.wait_for_heartbeat
+      when:
+        - definition.hosts.configs is defined
+        - "'parcels_directory' in definition.hosts.configs"
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
 - name: Configure Cloudera Manager auth and accounts
   hosts: cloudera_manager
   gather_facts: no
