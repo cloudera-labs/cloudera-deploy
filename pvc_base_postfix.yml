@@ -75,7 +75,7 @@
         - "'kts_passive' in groups"
   tags:
     - kts
-    - full_cluster
+#    - full_cluster
 
 - name: Handle KMS services
   hosts: localhost
