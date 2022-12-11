@@ -205,7 +205,6 @@
   become: yes
   roles:
     - role: cloudera.cluster.infrastructure.krb5_client
-      when: "'krb5_server' in groups"
   tags:
     - security
     - kerberos
