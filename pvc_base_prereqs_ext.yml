@@ -135,6 +135,7 @@
 
 - name: Create local users on ECS Nodes
   hosts: ecs_nodes
+  become: yes
   gather_facts: yes
   tags:
     - pvc
@@ -162,7 +163,7 @@
 
 # DB Connectors
 - name: Install MySQL Connector
-  hosts: cloudera_manager, cluster, ecs_nodes
+  hosts: cloudera_manager, cluster
   gather_facts: no
   become: yes
   roles:
@@ -173,7 +174,7 @@
     - full_cluster
 
 - name: Install Oracle Connector
-  hosts: cloudera_manager, cluster, ecs_nodes
+  hosts: cloudera_manager, cluster
   gather_facts: no
   become: yes
   roles:

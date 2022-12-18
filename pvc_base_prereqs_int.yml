@@ -198,7 +198,7 @@
 # STARTBLOCK # Configure CM
 
 - name: Restart Cloudera Manager Agents
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   gather_facts: no
   become: yes
   tasks:
@@ -211,7 +211,7 @@
     - restart_agents
 
 - name: Ensure that the agents are heartbeating
-  hosts: cloudera_manager, cluster
+  hosts: cloudera_manager, cluster, ecs_nodes
   gather_facts: yes
   any_errors_fatal: yes
   roles:
