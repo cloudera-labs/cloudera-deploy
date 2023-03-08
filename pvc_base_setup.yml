@@ -58,6 +58,7 @@
     - cloudera.cluster.deployment.cluster
   tags:
     - cluster
+    - pvc
     - default_cluster
     - full_cluster
 
