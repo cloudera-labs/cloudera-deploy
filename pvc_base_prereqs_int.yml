@@ -1,0 +1,247 @@
+---
+
+# Copyright 2022 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# This Playbook is specifically for Deploying Cloudera Clusters
+# Edit with extreme caution
+
+# STARTBLOCK # Init run
+- name: Init run tasks for Ansible Controller
+  hosts: localhost
+  gather_facts: yes
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+      when: init__completed is undefined
+
+    - name: Prepare inventory for PvC Plays
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+        tasks_from: prep_pvc.yml
+  tags:
+    - always
+
+- name: Init run tasks for all nodes
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Group hosts by host template and TLS
+      ansible.builtin.include_role:
+        name: cloudera.cluster.deployment.groupby
+
+    - name: Check connectivity to Inventory
+      ansible.builtin.wait_for_connection:
+  tags:
+    - always
+# ENDBLOCK # Init run
+
+# STARTBLOCK # Install Cloudera Manager
+
+- name: Install Cloudera Manager daemons
+  hosts: cloudera_manager, cluster, ecs_nodes
+  become: yes
+  any_errors_fatal: true
+  roles:
+    - role: cloudera.cluster.cloudera_manager.daemons
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
+- name: Install Cloudera Manager server
+  hosts: cloudera_manager
+  become: yes
+  roles:
+    - role: cloudera.cluster.cloudera_manager.server
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
+- name: Install Cloudera Manager License
+  hosts: cloudera_manager
+  become: yes
+  roles:
+    - role: cloudera.cluster.cloudera_manager.license
+  tags:
+    - cm
+    - license
+    - default_cluster
+    - full_cluster
+
+- name: Install Cloudera Manager agents
+  hosts: cloudera_manager, cluster, ecs_nodes
+  become: yes
+  any_errors_fatal: true
+  roles:
+    - role: cloudera.cluster.cloudera_manager.agent
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
+- name: Configure Cloudera Manager server for TLS
+  hosts: cloudera_manager
+  become: yes
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.cloudera_manager.server_tls
+      when: tls | default(False) or manual_tls_cert_distribution | default(False)
+  tags:
+    - tls
+    - cm
+    - full_cluster
+
+- name: Configure Cloudera Manager agents
+  hosts: cloudera_manager, cluster, ecs_nodes
+  become: yes
+  any_errors_fatal: true
+  roles:
+    - cloudera.cluster.cloudera_manager.agent_config
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
+- name: Configure Cloudera Manager server
+  hosts: cloudera_manager
+  gather_facts: no
+  roles:
+    - cloudera.cluster.cloudera_manager.config
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
+- name: Configure Cloudera Manager auth and accounts
+  hosts: cloudera_manager
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.cloudera_manager.external_auth
+    - role: cloudera.cluster.cloudera_manager.external_account
+  tags:
+    - cm
+    - full_cluster
+
+# ENDBLOCK # Install Cloudera Manager
+# STARTBLOCK # Cloudera Manager Password
+
+- name: Configure Cloudera Manager Password
+  hosts: cloudera_manager
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.cloudera_manager.admin_password.set
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
+- name: Check Cloudera Manager admin password
+  hosts: cloudera_manager, cluster
+  gather_facts: no
+  roles:
+    - cloudera.cluster.cloudera_manager.api_client
+  tags:
+    - cm
+    - default_cluster
+    - full_cluster
+
+# ENDBLOCK # Cloudera Manager Password
+# STARTBLOCK # Prepare Security
+
+- name: Enable Auto-TLS
+  hosts: cloudera_manager
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.cloudera_manager.autotls
+      when: autotls is defined and autotls == True
+  tags:
+    - autotls
+    - full_cluster
+
+- name: Install pre-requisite packages for Kerberos
+  hosts: cloudera_manager, cluster, ecs_nodes
+  become: yes
+  roles:
+    - role: cloudera.cluster.prereqs.kerberos
+      when: "'krb5_server' in groups"  # Only set up if cloudera.cluster has itself provisioned Kerberos
+  tags:
+    - kerberos
+    - prereqs
+    - full_cluster
+
+- name: Configure Cloudera Manager server for Kerberos
+  hosts: cloudera_manager
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.cloudera_manager.kerberos
+      when: krb5_kdc_host is defined or 'krb5_server' in groups
+  tags:
+    - kerberos
+    - full_cluster
+
+# ENDBLOCK # Prepare Security
+# STARTBLOCK # Configure CM
+
+- name: Restart Cloudera Manager Agents
+  hosts: cloudera_manager, cluster
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Restart Cloudera Manager Agents
+      meta: noop
+      notify:
+        - restart cloudera-scm-agent
+  tags:
+    - never
+    - restart_agents
+
+- name: Ensure that the agents are heartbeating
+  hosts: cloudera_manager, cluster
+  gather_facts: yes
+  any_errors_fatal: yes
+  roles:
+    - role: cloudera.cluster.cloudera_manager.wait_for_heartbeat
+      when: cloudera_manager_agent_wait_for_heartbeat | default(True)
+  tags:
+    - heartbeat
+    - default_cluster
+    - full_cluster
+
+- name: Deploy Cloudera Management Service
+  hosts: cloudera_manager
+  gather_facts: no
+  roles:
+    - cloudera.cluster.deployment.services.mgmt
+  tags:
+    - mgmt
+    - default_cluster
+    - full_cluster
+
+- name: Preload parcels from custom repo to Cloudera Manager
+  hosts: cloudera_manager
+  become: yes
+  gather_facts: no
+  roles:
+    - role: cloudera.cluster.cloudera_manager.preload_parcels
+      when: "'custom_repo' in groups"
+  tags:
+    - preload_parcels
+    - default_cluster
+    - full_cluster
+
+# ENDBLOCK # Configure CM
