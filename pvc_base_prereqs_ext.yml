@@ -136,7 +136,7 @@
 - name: Create local users on ECS Nodes
   hosts: ecs_nodes
   become: yes
-  gather_facts: yes
+  gather_facts: no
   tags:
     - pvc
     - users
