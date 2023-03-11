@@ -110,7 +110,6 @@
 
 - name: Apply OS Prereqs to ECS Nodes
   hosts: ecs_nodes
-  gather_facts: yes
   become: yes
   tags:
     - pvc
@@ -135,7 +134,8 @@
 
 - name: Create local users on ECS Nodes
   hosts: ecs_nodes
-  gather_facts: yes
+  become: yes
+  gather_facts: no
   tags:
     - pvc
     - users
