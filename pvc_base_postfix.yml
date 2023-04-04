@@ -162,7 +162,7 @@
         name: cloudera.cluster.cloudera_manager.services_info
         public: yes
       vars:
-        cluster_name_external: "{{ cluster_name_base }}"
+        cluster_name: "{{ cluster_name_base }}"
 
     - name: Fix Hue ticket lifetime for Free IPA
       include_role:
