@@ -68,8 +68,14 @@
   hosts: localhost
   become: yes
   gather_facts: no
-  roles:
-    - role: cloudera.cluster.deployment.services.kts_high_availability
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera.cluster.deployment.services.kts_high_availability
+        public: yes
+        apply:
+          tags:
+            - kts
+            - full_cluster
       when:
         - "'kts_active' in groups"
         - "'kts_passive' in groups"
@@ -169,12 +175,13 @@
       include_role:
         name: cloudera.cluster.cloudera_manager.session_timeout
 
-    - name: Create missing Solr plugin for Ranger
-      include_role:
-        name: cloudera.cluster.config.services.solr_ranger_plugin
-      when:
-        - ranger_service_exists | default(false)
-        - solr_service_exists | default(false)
+## TODO Believe this is version specific, in 7.1.7Spx solr plugin is NOT missing, needs work
+#    - name: Create missing Solr plugin for Ranger
+#      include_role:
+#        name: cloudera.cluster.config.services.solr_ranger_plugin
+#      when:
+#        - ranger_service_exists | default(false)
+#        - solr_service_exists | default(false)
 
     - name: Add Solr urls to Knox
       include_role:
@@ -188,10 +195,11 @@
       include_role:
         name: cloudera.cluster.config.services.kms_tls
 
-    - name: Ranger extra policies to have enough rights with basic accounts
-      when: ranger_service_exists | default(false)
-      include_role:
-        name: cloudera.cluster.config.services.ranger_pvc_default_policies
+## TODO Believe this is version specific, in 7.1.7SPx Ranger policies are duplicated, needs work
+#    - name: Ranger extra policies to have enough rights with basic accounts
+#      when: ranger_service_exists | default(false)
+#      include_role:
+#        name: cloudera.cluster.config.services.ranger_pvc_default_policies
 
 # End run
 ###
