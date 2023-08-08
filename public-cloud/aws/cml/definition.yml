@@ -1,6 +1,6 @@
 ---
 
-# Copyright 2021 Cloudera, Inc. All Rights Reserved.
+# Copyright 2023 Cloudera, Inc. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+################################################################################
+# Global variables
+################################################################################
+name_prefix:  cmlex     # name prefix for everything
+infra_region: us-east-2 # CSP region for infra
+infra_type:   aws       # CSP
+
+# globals:
+#   force_teardown: yes
+
+################################################################################
+# CDP Environment and Datalake variables
+################################################################################
+env:
+  public_endpoint_access: yes
+  tunnel: yes
+
+################################################################################
+# Machine Learning Configurations
+################################################################################
 ml:
   definitions:
     - tls: yes
@@ -21,6 +41,7 @@ ml:
       governance: yes
       metrics: yes
       public_loadbalancer: yes
+      ip_addresses: [ "0.0.0.0/0" ] # Unrestricted
       instance_groups:
         - name: cpu_settings
           autoscaling:
@@ -29,9 +50,8 @@ ml:
           instanceCount: 0
           instanceTier: "ON_DEMAND"
           instanceType: m5.4xlarge  # AWS
-#         instanceType: Standard_D8_v3  # Azure
           rootVolume:
-            size: 100
+            size: 300
         - name: gpu_settings
           autoscaling:
             maxInstances: 1
@@ -39,6 +59,5 @@ ml:
           instanceCount: 0
           instanceTier: "ON_DEMAND"
           instanceType: "p2.8xlarge" # AWS
-#         instanceType: Standard_D8_v3  # Azure
           rootVolume:
-            size: 100
+            size: 300
