@@ -17,12 +17,15 @@
 ################################################################################
 # Global variables
 ################################################################################
-name_prefix:  cmlex     # name prefix for everything
-infra_region: us-east-2 # CSP region for infra
-infra_type:   aws       # CSP
+# Either define here or override using _extra variables_ in the CLI or AWX.
+# For example, '-e name_prefix=cmlex'
+# name_prefix:            # You must specify a name prefix
+# admin_password:         # You must specify an admin password
+infra_region:   us-east-2 # CSP region for infra
+infra_type:     aws       # CSP
 
-# globals:
-#   force_teardown: yes
+# Limit to the caller/controller
+allowed_cidrs: "{{ lookup('ansible.builtin.url', 'https://api.ipify.org', wantlist=True) | product(['32']) | map('join', '/') | list }}"
 
 ################################################################################
 # CDP Environment and Datalake variables
@@ -30,6 +33,11 @@ infra_type:   aws       # CSP
 env:
   public_endpoint_access: yes
   tunnel: yes
+
+infra:
+  vpc:
+    extra_cidr: "{{ allowed_cidrs }}"
+    extra_ports: [22, 443]
 
 ################################################################################
 # Machine Learning Configurations
@@ -41,7 +49,7 @@ ml:
       governance: yes
       metrics: yes
       public_loadbalancer: yes
-      ip_addresses: [ "0.0.0.0/0" ] # Unrestricted
+      ip_addresses: "{{ allowed_cidrs }}"
       instance_groups:
         - name: cpu_settings
           autoscaling:
