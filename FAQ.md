@@ -2,13 +2,26 @@
 
 ## Where did everything go?
 
-We undertook some serious remodeling, but rest assured, your definitions will still work as they did in the previous version of `cloudera-deploy`.  
+The project undertook some serious remodeling, but rest assured, your definitions will still work as they did in the previous version of `cloudera-deploy`.  
 
 So where did everything go? Well...
 
-1. The `quickstart.sh` migrated to `ansible-navigator`. Both applications use a container based on `ansible-runner`, i.e. [`cldr-runner`](https://github.com/cloudera-labs/cldr-runner), yet `ansible-navigator` is configuration-driven and better aligned with how AWX runs Ansible in containers. Plus, `ansible-navigator` brings a nifty UI and the ease of use to handle different execution modes. (And we also migrated `cldr-runner` to use `ansible-builder`, but you can read more about that at the [`cldr-runner`](https://github.com/cloudera-labs/cldr-runner) project.)
-1. The original `cloudera-deploy` playbooks moved into `cloudera.exe`. Starting with Ansible `2.11`, [collections can contain playbooks](https://docs.ansible.com/ansible/latest/collections_guide/collections_using_playbooks.html#using-a-playbook-from-a-collection). We call them using `import_playbook` like roles. Using them requires you to first set up your `cloudera-deploy` variables _before_ calling the playbooks.
-1. The _run-levels_ still remain, however, the playbooks are more granular. This move promotes composibility and reusability, and we are going to continue to break down the functions and operations within `cloudera-deploy` and the notably the collections that drive this application. We want you to adapt and create your own "deploy" application, one that caters to _your_ needs and operating parameters. Going more granular, more modular is key to this end.
+1. The `quickstart.sh` migrated to `ansible-navigator`. Both of these applications use a container based on `ansible-runner`, i.e. [`cldr-runner`](https://github.com/cloudera-labs/cldr-runner), to execute the playbooks, yet `ansible-navigator` is configuration-driven and better aligned with how AWX runs Ansible in containers. 
+  `ansible-navigator` brings a nifty UI and the ease of use to handle different execution modes.
+  We also migrated `cldr-runner` to use `ansible-builder`, but you can read more about that effort at the [`cldr-runner`](https://github.com/cloudera-labs/cldr-runner) project.
+1. The original `cloudera-deploy` playbooks moved into `cloudera.exe`. Starting with Ansible `2.11`, [collections can contain playbooks](https://docs.ansible.com/ansible/latest/collections_guide/collections_using_playbooks.html#using-a-playbook-from-a-collection). We call the playbooks using `import_playbook` like roles. PLEASE NOTE, if you are developing your own project playbooks, you must first set up your `cloudera-deploy` variables _before_ calling the playbooks by running the `cloudera.exe.init_deployment` role on `localhost`.
+1. The _run-levels_ still remain; you can still use `-t infra` for example. However, the playbooks themselves are more granular and overall set up and tear down processes are now separate playbooks.
+  This change promotes composibility and reusability, and we are going to continue to break apart the functions and operations within `cloudera-deploy` and -- most importantly -- the collections that drive this application. We fully expect that you will want to adapt and create your own "deploy" application, one that caters to _your_ needs and operating parameters. Switching to a more granular, more modular approach is key to this objective.
+
+## How to I add _extra variables_ and tags to `ansible-navigator`?
+
+If you want to run a playbook with a given tag, e.g. `-t infra`, then simply add it as a parameter to the `ansible-navigator` commandline. For example, `ansible-navigator run playbook.yml -t infra`. 
+
+Like tags, so you can pass _extra variables_ to `ansible-navigator` and the underlying Ansible command. For example, `ansible-navigator run playbook.yml -e @some_config.yml -e some_var=yes`.
+
+## How do I tell `ansible-navigator` where to find collections and roles?
+
+By default, `cloudera-deploy` expects to use the collections, roles, and libraries within the _execution environment_ container, that is `cldr-runner`. Make sure you do _not_ have `ANSIBLE_COLLECTIONS_PATH` or `ANSIBLE_ROLES_PATH` set or `ansible-navigator` will pick up these environment variables and pass them to the running container. The underlying `ansible` application, like `ansible-playbook` will then pick up these environment variables and attempt to use them if set! This behavior is great if you want to use host-based collections, e.g. local development, but you need to ensure that you update the `ansible-navigator.yml` configuration file to mount the host collection and/or role directories into the execution environment container.
 
 ## `ansible-navigator` hangs when I run my playbook. What is going on?
 

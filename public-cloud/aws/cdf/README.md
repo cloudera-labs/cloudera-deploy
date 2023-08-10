@@ -10,11 +10,11 @@ To run, you need:
 * AWS credentials (set via `AWS_PROFILE`)
 * CDP credentials (set via `CDP_PROFILE`)
 
-[^1]: [OrbStack](https://orbstack.dev) works well on OSX.
+[^1]: For example, [OrbStack](https://orbstack.dev) works well on OSX.
 
 ## Set Up
 
-First, set up your `cdp-navigator` environment -- follow the instructions in the [README](../../README.md).
+First, set up your `ansible-navigator` aka `cdp-navigator` environment -- follow the instructions in the top-level [README](../../../README.md#setting-up-ansible-navigator).
 
 Then, clone this project and change your working directory.
 
@@ -39,7 +39,7 @@ admin_password: "Secret"  # 1 upper, 1 special, 1 number, 8-64 chars.
 infra_region:   us-east-2
 ```
 
-NOTE: You can override these parameters with any typical Ansible _extra variables_ flags, i.e. `-e admin_password=my_password`. See the [FAQ](#faq) section.
+NOTE: You can override these parameters with any typical Ansible _extra variables_ flags, i.e. `-e admin_password=my_password`. See the [FAQ](../../../FAQ.md#how-to-i-add-extra-variables-and-tags-to-ansible-navigator) for details.
 
 ### SSH Keys
 
@@ -66,17 +66,3 @@ Tear down the CDP Public Cloud by running the playbook:
 ```bash
 ansible-navigator run teardown.yml
 ```
-
-## FAQ
-
-### Using tags
-
-If you want to run a playbook with a given tag, e.g. `-t infra`, then simply add it as a parameter to the `ansible-navigator` commandline. For example, `ansible-navigator run playbook.yml -t infra`. 
-
-### Using _extra variables_
-
-Like [tags](#using-tags), so you can pass _extra variables_ to `ansible-navigator` and the underlying Ansible command. For example, `ansible-navigator run playbook.yml -e @some_config.yml -e some_var=yes`.
-
-### Using Ansible collection and role paths
-
-Make sure you do _not_ have `ANSIBLE_COLLECTIONS_PATH` or `ANSIBLE_ROLES_PATH` set or `ansible-navigator` will pick up these environment variables and attempt to use them if set! This is great if you want to use host-based collections, e.g. local development, but you need to ensure that you update the `ansible-navigator.yml` configuration file to mount the host collection and/or role directories into the execution environment container.
