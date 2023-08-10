@@ -53,3 +53,46 @@ The various `filters`, like `subnet_filter`, `loadbalancer_subnets_filter`, etc.
 ```
 
 will limit the list of subnet objects to those with the term `pvt` and then select the first element of that reduced list.
+
+You can [test sample filters](https://play.jmespath.org/?u=45e4d839-15f9-4569-9490-20a2cbc0cc88) using this example on the JMESPath Playground (link goes to a preloaded playground):
+
+```json
+[
+  {
+    "availabilityZone": "us-east-2c",
+    "cidr": "10.10.64.0/19",
+    "subnetId": "subnet-0123",
+    "subnetName": "sbnt-pub-2"
+  },
+  {
+    "availabilityZone": "us-east-2a",
+    "cidr": "10.10.0.0/19",
+    "subnetId": "subnet-1234",
+    "subnetName": "sbnt-pub-0"
+  },
+  {
+    "availabilityZone": "us-east-2c",
+    "cidr": "10.10.160.0/19",
+    "subnetId": "subnet-2345",
+    "subnetName": "sbnt-pvt-2"
+  },
+  {
+    "availabilityZone": "us-east-2b",
+    "cidr": "10.10.128.0/19",
+    "subnetId": "subnet-3456",
+    "subnetName": "sbnt-pvt-1"
+  },
+  {
+    "availabilityZone": "us-east-2b",
+    "cidr": "10.10.32.0/19",
+    "subnetId": "subnet-4567",
+    "subnetName": "sbnt-pub-1"
+  },
+  {
+    "availabilityZone": "us-east-2a",
+    "cidr": "10.10.96.0/19",
+    "subnetId": "subnet-5678",
+    "subnetName": "sbnt-pvt-0"
+  }
+]
+```
