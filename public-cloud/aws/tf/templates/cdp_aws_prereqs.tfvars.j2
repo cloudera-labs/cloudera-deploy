@@ -1,0 +1,11 @@
+# ------- Global settings -------
+env_prefix = "{{ name_prefix }}"
+aws_region = "{{ infra_region }}"
+# ------- CDP Environment Deployment -------
+deployment_template = "{{ deployment_template }}"
+
+# ------- Network Settings -------
+ingress_extra_cidrs_and_ports = {
+ cidrs = {{ ingress_extra_cidrs_and_ports['cidrs'] | to_json }},
+ ports = {{ ingress_extra_cidrs_and_ports['ports'] }}
+}
