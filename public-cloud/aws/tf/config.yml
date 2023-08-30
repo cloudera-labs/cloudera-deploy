@@ -1,0 +1,13 @@
+---
+name_prefix: "<ENTER_VALUE>" # You must specify a name prefix
+
+infra_region: eu-west-1 # CSP region for infra
+
+deployment_template: semi-private  # Specify the deployment pattern below. Options are public, semi-private or private
+
+# Limit to the caller/controller
+allowed_cidrs: "{{ lookup('ansible.builtin.url', 'https://api.ipify.org', wantlist=True) | product(['32']) | map('join', '/') | list }}"
+
+ingress_extra_cidrs_and_ports:
+    cidrs: "{{ allowed_cidrs }}"
+    ports: [22, 443]

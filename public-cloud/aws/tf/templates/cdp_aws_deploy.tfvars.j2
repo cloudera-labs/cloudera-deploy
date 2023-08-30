@@ -1,0 +1,27 @@
+# ------- Global settings -------
+env_prefix = "{{ name_prefix }}"
+infra_type = "{{ infra_type }}"
+aws_region = "{{ infra_region }}"
+
+
+# ------- CDP Deployment Settings -------
+deployment_template = "{{ deployment_template }}"
+aws_key_pair        = "{{ aws_key_pair }}"
+
+aws_vpc_id = "{{ aws_vpc_id }}"
+aws_public_subnet_ids = {{ aws_public_subnet_ids | to_json }}
+aws_private_subnet_ids = {{ aws_private_subnet_ids | to_json }}
+
+aws_security_group_default_id = "{{ aws_security_group_default_id }}"
+aws_security_group_knox_id    = "{{ aws_security_group_knox_id }}"
+
+data_storage_location   = "{{ data_storage_location }}"
+log_storage_location    = "{{ log_storage_location }}"
+backup_storage_location = "{{ backup_storage_location }}"
+
+aws_xaccount_role_arn       = "{{ aws_xaccount_role_arn }}"
+aws_datalake_admin_role_arn = "{{ aws_datalake_admin_role_arn }}"
+aws_ranger_audit_role_arn   = "{{ aws_ranger_audit_role_arn }}"
+
+aws_log_instance_profile_arn      = "{{ aws_log_instance_profile_arn }}"
+aws_idbroker_instance_profile_arn = "{{ aws_idbroker_instance_profile_arn }}"

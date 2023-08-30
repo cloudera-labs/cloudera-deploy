@@ -1,0 +1,91 @@
+---
+
+# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Deploy example CDF ReadyFlow (Kafka-to-Kafka)
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    # Either define here or override using _extra variables_ in the CLI or AWX.
+    # For example, '-e name_prefix=cdfex'
+    # name_prefix:            # You must specify a name prefix
+    # admin_password:         # You must specify an admin password
+    env_name: "{{ name_prefix }}-aw-env"
+    smm_datahub: "{{ name_prefix }}-aw-kafka-dhub"
+  tasks:
+    - name: Verify input parameters for Kafka-to-Kafka ReadyFlow deployment
+      ansible.builtin.assert:
+        that:
+          - name_prefix is defined
+          - admin_password is defined
+        fail_msg: "You must provide both 'name_prefix' and 'admin_password'"
+
+    - name: Get CDP workload username for current user
+      cloudera.cloud.iam_user_info:
+        current_user: yes
+      register: __iam
+
+    - name: Retrieve the Kafka brokers from the Data Hub
+      ansible.builtin.set_fact:
+        kafka_brokers_fqdns: "{{ lookup('cloudera.cloud.datahub_instance', 'core_broker', datahub=smm_datahub) }}"
+      failed_when: kafka_brokers_fqdns | length < 1
+
+    - name: Ensure Kafka-to-Kafka ReadyFlow is imported
+      cloudera.cloud.df_readyflow:
+        name: "Kafka to Kafka"
+      register: __k2k
+      failed_when: not __k2k.readyflow
+
+    - name: Deploy Kafka-to-Kafka ReadyFlow
+      when:
+        - kafka_brokers_fqdns | length > 0
+      cloudera.cloud.df_deployment:
+        name: "{{ name_prefix }}_kafka-to-kafka"
+        df_name: "{{ env_name }}"
+        flow_name: "Kafka to Kafka"
+        flow_ver_crn: "{{ __k2k.readyflow.versions | sort(attribute='version') | map(attribute='crn') | first }}"
+        autoscale: yes
+        autostart_flow: yes
+        parameter_groups: "{{ parameter_groups }}"
+        kpis: "{{ kpis }}"
+      vars:
+        parameter_groups:
+          - name: "kafka-to-kafka"
+            parameters:
+              - name: "CDP Workload User"
+                value: "{{ __iam.users | map(attribute='workloadUsername') | first }}"
+              - name: "CDP Workload User Password"
+                value: "{{ admin_password }}"
+              - name: "Kafka Broker Endpoint"
+                value: "{{ kafka_brokers_fqdns | product(['9093']) | map('join', ':') | list | join(',') }}"
+              - name: "Kafka Consumer Group ID"
+                value: "ex_cdf_consg0"
+              - name: "Kafka Destination Topic"
+                value: "ex_cdf_dest"
+              - name: "Kafka Producer ID"
+                value: "_ex_cdf_prodc0"
+              - name: "Kafka Source Topic"
+                value: "ex_cdf_source"
+        kpis:
+          - metricId: cpuUtilization
+            alert:
+              thresholdMoreThan:
+                unitId: percentage
+                value: 25
+              frequencyTolerance:
+                unit:
+                  id: MINUTES
+                value: 5
