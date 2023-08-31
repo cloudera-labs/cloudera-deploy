@@ -114,3 +114,22 @@ You can [test sample filters](https://play.jmespath.org/?u=45e4d839-15f9-4569-94
   }
 ]
 ```
+
+## How to I configure SSH to avoid a "Failed to connect to new control master" error?
+
+When running connecting to a host via SSH while running `ansible-navigator`, in particular when you are working with Terraform inventory managed by the `cloud.terraform` inventory plugin, you might encounter the following error:
+
+```
+Failed to connect to the host via ssh: Control socket connect(/runner/.ansible/cp/b44b170fff): Connection refused
+Failed to connect to new control master
+```
+
+To resolve, be sure to add the following variable to your `ansible-navigator.yml` configuration file:
+
+```yaml
+ansible-navigator:
+  execution-environment:
+    environment-variables:
+      set:
+        ANSIBLE_SSH_CONTROL_PATH: "/dev/shm/cp%%h-%%p-%%r"
+```
