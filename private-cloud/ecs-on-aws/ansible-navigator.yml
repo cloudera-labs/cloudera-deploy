@@ -42,7 +42,6 @@ ansible-navigator:
       - src: "~/.aws"
         dest: "/runner/.aws"
         options: "Z"
-        options: "Z"
       - src: "~/.ssh"
         dest: "/runner/.ssh"
         options: "Z"
