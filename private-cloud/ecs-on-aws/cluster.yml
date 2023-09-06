@@ -1,0 +1,275 @@
+---
+
+cluster_name_base: PVC-Base
+
+clusters:
+  - name: PVC-ECS
+    type: ecs
+    pvc_repository: "{{ ecs_options.repository }}"
+    application_domain: "{{ name_prefix }}.{{ domain }}"
+    datalake: "{{ cluster_name_base }}"
+    ecs_database_mode: embedded
+    services: [ DOCKER, ECS ]
+    security:
+      tls: true
+    repositories: "{{ ecs_options.parcel_repositories }}"
+    configs:
+      DOCKER:
+        SERVICEWIDE:
+          defaultDataPath: "/mnt/docker"
+          docker_images_destination_registry_user: registry-user
+      ECS:
+        SERVICEWIDE:
+          docker: docker
+          cp_prometheus_ingress_user: cloudera-manager
+          cp_prometheus_ingress_password: "{{ admin_password }}"
+          infra_prometheus_ingress_user: cloudera-manager
+          infra_prometheus_ingress_password: "{{ admin_password }}"
+          longhorn_replication: 2
+          lsoDataPath: "/ecs/local"
+          defaultDataPath: "/ecs/longhorn-storage"
+          nfs_provisioned: 800
+          nfs_over_provisioning: 800
+          # TODO: Create cert and key for ECS ingress controller
+          # ssl_certificate: /opt/cloudera/security/pki/ecs.pem
+          # ssl_private_key: /opt/cloudera/security/pki/ecs.key
+    host_templates:
+      ECSMaster:
+        DOCKER: [ DOCKER_SERVER ]
+        ECS: [ ECS_SERVER ]
+      ECSWorker:
+        DOCKER: [ DOCKER_SERVER ]
+        ECS: [ ECS_AGENT ]
+    controlplane_config:
+      ContainerInfo:
+        Mode: public
+        CopyDocker: false
+      Database:
+        Mode: embedded
+        EmbeddedDbStorage: 50
+
+  - name: PVC-Base
+    type: base
+    services: [ATLAS, HBASE, HDFS, HIVE, HIVE_ON_TEZ, INFRA_SOLR, KAFKA, OZONE, RANGER, SPARK_ON_YARN, TEZ, YARN, ZOOKEEPER]
+    security:
+      kerberos: true
+      tls: true
+    repositories: "{{ repositories }}"
+    configs:
+      ATLAS:
+        SERVICEWIDE:
+          kerberos.auth.enable: true
+        ATLAS_SERVER:
+          atlas_authentication_method_file: true
+          atlas_admin_password: "{{ common_password }}"
+          atlas_sso_knox_enabled: false
+          atlas_authentication_method_trustedproxy: false
+          atlas_authentication_method_pam: false
+          atlas_authentication_method_ldap: true
+          atlas_authentication_method_ldap_url: "{{ auth_provider.ldap_url }}"
+          atlas_authentication_method_ldap_bind_dn: "{{ auth_provider.ldap_bind_user_dn }}"
+          atlas_authentication_method_ldap_bind_password: "{{ auth_provider.ldap_bind_password }}"
+          atlas_authentication_method_ldap_userDNpattern: "uid={0},{{ auth_provider.ldap_search_base.user }}"
+          atlas_authentication_method_ldap_base_dn: "{{ auth_provider.ldap_search_base.user }}"
+          atlas_authentication_method_ldap_user_searchfilter: "{{ auth_provider.ldap_search_filter.user }}"
+          atlas_authentication_method_ldap_groupSearchBase: "{{ auth_provider.ldap_search_base.group }}"
+          atlas_authentication_method_ldap_groupSearchFilter: "{{ auth_provider.ldap_search_filter.member }}"
+          atlas_authentication_method_ldap_groupRoleAttribute: "{{ auth_provider.ldap_attr_group_name }}"
+          atlas_authentication_method_ldap_type: "ldap"
+          atlas_authentication_method_ldap_default_role: "ROLE_ADMIN"
+      HBASE:
+        SERVICEWIDE:
+          hadoop_secure_web_ui: true
+          hbase_graceful_stop_timeout: 5
+        REGIONSERVER:
+          hbase_regionserver_java_heapsize: 268435456
+        MASTER:
+          hbase_master_java_heapsize: 134217728
+        GATEWAY:
+          hbase_client_java_heapsize: 134217728
+      # NOTE: Have removed /mnt from the various HFDS directories
+      HDFS:
+        SERVICEWIDE:
+          hdfs_verify_ec_with_topology_enabled: false
+          enable_ranger_authorization: true
+          hadoop_secure_web_ui: false
+          trusted_realms: "{{ realm | upper }}, {{ realm | lower }}"
+        DATANODE:
+          datanode_java_heapsize: 134217728
+          dfs_data_dir_list: /dfs/dn
+          dfs_datanode_max_locked_memory: 0
+          dfs_datanode_failed_volumes_tolerated: 0
+        GATEWAY:
+          hdfs_client_java_heapsize: 134217728
+        NAMENODE:
+          dfs_name_dir_list: /dfs/nn
+          namenode_java_heapsize: 134217728
+          role_config_suppression_namenode_java_heapsize_minimum_validator: true
+        SECONDARYNAMENODE:
+          secondary_namenode_java_heapsize: 134217728
+          fs_checkpoint_dir_list: /dfs/snn
+      HIVE:
+        SERVICEWIDE:
+          ranger_plugin_urlauth_filesystem_schemes: "file:,wasb:,adl:"
+        GATEWAY:
+          hive_client_java_heapsize: 134217728
+        HIVEMETASTORE:
+          hive_metastore_java_heapsize: 268435456
+          metastore_canary_health_enabled: false
+      HIVE_ON_TEZ:
+        SERVICEWIDE:
+          ranger_plugin_urlauth_filesystem_schemes: "file:,wasb:,adl:"          
+      KAFKA:
+        SERVICEWIDE:
+          kerberos.auth.enable: true
+          offsets.topic.replication.factor: 1
+          transaction.state.log.replication.factor: 1
+          transaction.state.log.min.isr: 1
+          producer.metrics.enable: false
+          service_config_suppression_kafka_broker_count_validator: true
+          service_config_suppression_offsets.topic.replication.factor: true
+          service_config_suppression_transaction.state.log.replication.factor: true
+        KAFKA_BROKER:
+          graceful_stop_timeout: 5
+      OZONE:
+        SERVICEWIDE:
+          ozone.security.enabled: true
+          ozone.service.id: ozone1
+          ozone.security.http.kerberos.enabled: false
+          service_config_suppression_ozone_manager_count_validator: true
+          service_config_suppression_storage_container_manager_count_validator: true
+        OZONE_MANAGER:
+          om_max_heap_size: 2048
+        STORAGE_CONTAINER_MANAGER:
+          scm_max_heap_size: 2048      
+        OZONE_DATANODE:
+          ozone_datanode_heap_size: 2048
+        OZONE_PROMETHEUS:
+          ozone.prometheus.http-port: 19090
+      RANGER:
+        SERVICEWIDE:
+          keyadmin_user_password: "{{ common_password }}"
+          rangeradmin_user_password: "{{ common_password }}"
+          rangertagsync_user_password: "{{ common_password }}"
+          rangerusersync_user_password: "{{ common_password }}"
+        RANGER_ADMIN:
+          ranger_admin_max_heap_size: 1024
+          ranger_authentication_method: "LDAP"
+          ranger.ldap.url: "{{ auth_provider.ldap_url }}"
+          ranger.ldap.bind.dn: "{{ auth_provider.ldap_bind_user_dn }}"
+          ranger_ldap_bind_password: "{{ auth_provider.ldap_bind_password }}"
+          ranger.ldap.user.dnpattern: "uid={0},{{ auth_provider.ldap_search_base.user }}"
+          ranger.ldap.base.dn: "{{ auth_provider.ldap_base_dn }}"
+          ranger.ldap.user.searchfilter: "(&(sAMAccountName={0})(objectClass=person))"
+          ranger.ldap.group.searchfilter: "(&(member={0})(objectClass=group))"
+          ranger.ldap.group.searchbase: "{{ auth_provider.ldap_search_base.group }}"
+          ranger.ldap.group.roleattribute: "{{ auth_provider.ldap_attr_group_name }}"
+          ranger.ldap.referral: "follow"
+        RANGER_TAGSYNC:
+          ranger_tagsync_max_heap_size: 1024
+        RANGER_USERSYNC:
+          ranger_usersync_max_heap_size: 1024
+          ranger.usersync.ldap.binddn: "{{ auth_provider.ldap_bind_user_dn }}"
+          ranger.usersync.ldap.url: "{{ auth_provider.ldap_url }}"
+          ranger_usersync_ldap_ldapbindpassword: "{{ auth_provider.ldap_bind_password }}"
+          ranger.usersync.ldap.referral: follow
+          ranger.usersync.ldap.username.caseconversion: lower
+          ranger.usersync.ldap.groupname.caseconversion: lower
+          ranger.usersync.ldap.grouphierarchylevels: 0
+          ranger.usersync.group.based.role.assignment.rules: '&ROLE_SYS_ADMIN:g:field-se'
+          ranger.usersync.group.memberattributename: "{{ auth_provider.ldap_attr_group_membership }}"
+          ranger.usersync.group.nameattribute: "{{ auth_provider.ldap_attr_group_name }}"
+          ranger.usersync.group.objectclass: group
+          ranger.usersync.group.searchbase: "{{ auth_provider.ldap_search_base.group }}"
+#          ranger.usersync.group.searchfilter: ""
+#          ranger.usersync.ldap.user.searchfilter: ""
+          ranger.usersync.ldap.user.nameattribute: "{{ auth_provider.ldap_attr_user_name }}"
+          ranger.usersync.ldap.user.objectclass: person
+          ranger.usersync.ldap.user.searchbase: "{{ auth_provider.ldap_search_base.user }}"
+          ranger.usersync.source.impl.class: org.apache.ranger.ldapusersync.process.LdapUserGroupBuilder
+          ranger.usersync.user.searchenabled: 'true'
+
+#obsolete in 7.1.6          ranger.usersync.ldap.searchBase: "{{ auth_provider.ldap_base_dn }}"
+#obsolete in 7.1.6          ranger.usersync.ldap.user.groupnameattribute: "{{ auth_provider.ldap_attr_group_name }}"
+#obsolete in 7.1.6          ranger.usersync.group.search.first.enabled: 'true'
+#obsolete in 7.1.6          ranger.usersync.group.searchenabled: 'true'
+      INFRA_SOLR:
+        SERVICEWIDE:
+          #set false for 7.1.7 since it doesnt build cm_solr
+          enable_ranger_authorization: false
+        SOLR_SERVER:
+          solr_graceful_stop_timeout: 5
+      SPARK_ON_YARN:
+        SPARK_YARN_HISTORY_SERVER:
+          ssl_enabled: true
+          history_server_spnego_enabled: false
+      YARN:
+        SERVICEWIDE:
+          hadoop_secure_web_ui: false
+        JOBHISTORY:
+          mr2_jobhistory_java_heapsize: 134217728
+        NODEMANAGER:
+          node_manager_java_heapsize: 134217728
+          yarn_nodemanager_resource_memory_mb: 2048
+          yarn_nodemanager_resource_cpu_vcores: 2
+        RESOURCEMANAGER:
+          resource_manager_java_heapsize: 134217728
+          yarn_scheduler_maximum_allocation_mb: 2048
+          yarn_scheduler_maximum_allocation_vcores: 2
+      ZOOKEEPER:
+        SERVICEWIDE:
+          zookeeper_datadir_autocreate: true
+          service_config_suppression_server_count_validator: true
+        SERVER:
+          zookeeper_server_java_heapsize: 134217728
+    host_templates:
+      Masters:
+        ATLAS: [ATLAS_SERVER]
+        HBASE: [MASTER, REGIONSERVER, GATEWAY]
+        HDFS: [NAMENODE, SECONDARYNAMENODE, DATANODE]
+        HIVE: [HIVEMETASTORE, GATEWAY]
+        HIVE_ON_TEZ: [HIVESERVER2, GATEWAY]
+        INFRA_SOLR: [SOLR_SERVER]
+        KAFKA: [KAFKA_BROKER]
+        OZONE: [GATEWAY, OZONE_MANAGER, OZONE_RECON, STORAGE_CONTAINER_MANAGER, OZONE_DATANODE, S3_GATEWAY]
+        RANGER: [RANGER_ADMIN, RANGER_TAGSYNC, RANGER_USERSYNC]
+        SPARK_ON_YARN: [SPARK_YARN_HISTORY_SERVER, GATEWAY]
+        TEZ: [GATEWAY]
+        YARN: [RESOURCEMANAGER, NODEMANAGER, JOBHISTORY, GATEWAY]
+        ZOOKEEPER: [SERVER]
+
+      Workers:
+        HBASE: [REGIONSERVER, GATEWAY]
+        HDFS: [DATANODE]
+        HIVE: [GATEWAY]
+        HIVE_ON_TEZ: [GATEWAY]
+        OZONE: [OZONE_DATANODE, GATEWAY]
+        TEZ: [GATEWAY]
+        SPARK_ON_YARN: [GATEWAY]
+        YARN: [NODEMANAGER, GATEWAY]
+        ZOOKEEPER: [SERVER]
+
+mgmt:
+  name: Cloudera Management Service
+  services: [ALERTPUBLISHER, EVENTSERVER, HOSTMONITOR, REPORTSMANAGER, SERVICEMONITOR]
+  security:
+    tls: true
+  configs:
+    HOSTMONITOR:
+      firehose_heapsize: 1073741824
+      firehose_non_java_memory_bytes: 2147483648
+    SERVICEMONITOR:
+      firehose_heapsize: 2147483648
+      firehose_non_java_memory_bytes: 6442450944
+      role_config_suppression_firehose_service_monitor_non_java_memory_role_validator: true
+
+hosts:
+  configs:
+    host_default_proc_memswap_thresholds:
+      warning: never
+      critical: never
+    host_memswap_thresholds:
+      warning: never
+      critical: never
+    host_config_suppression_agent_system_user_group_validator: true
+    host_config_suppression_memory_overcommitted_validator: true

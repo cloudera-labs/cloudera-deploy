@@ -1,0 +1,16 @@
+---
+    # Playbook to setup additional resources for PvC Deployment
+
+- name: Ensure additional requirements are available
+  hosts: nodes
+  gather_facts: no
+  become: yes
+  tasks:
+
+    - name: Install required packages
+      ansible.builtin.package:
+        name: 
+          - tree 
+          - jq 
+          - zip
+        state: present

@@ -1,0 +1,17 @@
+# Ansible Navigator assets
+ansible-navigator.log
+runs
+context
+
+# Terraform deployments
+tf_deployment*
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Static inventory files
+inventory_static*

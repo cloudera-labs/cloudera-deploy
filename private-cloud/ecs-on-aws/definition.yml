@@ -1,0 +1,248 @@
+---
+
+kerberos_activated: True
+encryption_activated: True
+# tls_activated: True
+# autotls: False
+
+repositories:
+  # 7.1.8 CHF4
+  - https://archive.cloudera.com/p/cdh7/7.1.8.15/parcels/
+cloudera_manager_version: 7.10.1
+
+jdk_version: 11
+
+# ECS details
+ecs_options:
+  # Version 1.5.1
+  repository: https://archive.cloudera.com/p/cdp-pvc-ds/1.5.1/
+  parcel_repositories:
+    - https://archive.cloudera.com/p/cdp-pvc-ds/1.5.1/parcels/
+
+# SSH
+public_key_id: "{{ owner_prefix }}-{{ name_prefix }}"
+public_key_file: "{{ lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE') }}"
+public_key_text: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE')) }}"
+
+# Cloudera license
+license_file: "{{ lookup('ansible.builtin.env', 'CDP_LICENSE_FILE') }}"
+
+# Terraform settings
+terraform:
+  state:
+    storage: local
+    create_remote_storage: False
+    s3_region: "{{ infra_region }}"
+    s3_bucket: "{{ owner_prefix }}-{{ name_prefix }}-tf-state"
+
+# DNS
+dns_provider: "freeipa"
+
+# Connect FreeIPA to Knox and Ranger
+freeipa_activated: yes
+
+# FreeIPA realm settings
+freeipa:
+  realm: "{{ realm }}"
+
+#####
+
+# Vars from legacy cloudera-Deploy
+use_auto_repo_mirror: no
+use_default_cluster_definition: no
+use_download_mirror: no
+preload_cm_parcel_repo: yes
+teardown_everything: yes
+
+# Defer user and group creation to SSSD/FreeIPA registration
+#Use when you dont need ansible to run "ca_server"
+skip_user_group_init: no
+
+# Cloudera Manager details
+
+cloudera_manager_options:
+  CUSTOM_BANNER_HTML: "1.5.1 - PvC ECS Lab ({{ name_prefix }})"
+  SESSION_TIMEOUT: 43200
+  PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND: 194560
+  # NOTE: Disabled in ChuckL's latest definition
+  # PHONE_HOME: false
+  # PROXYUSER_KNOX_GROUPS: "*"
+  # PROXYUSER_KNOX_HOSTS: "*"
+  # PROXYUSER_KNOX_PRINCIPAL: "knox"
+  # PROXYUSER_KNOX_USERS: "*"
+  KRB_AUTH_ENABLE: "true"
+
+# License options (this is due to a hardcoded tmp directory on the target/manager node)
+license_local_tmp_path: /tmp/cloudera_license.txt
+
+###############
+###  RDBMS  ###
+###############
+database_type: postgresql
+database_version: 10
+database_tls: true
+
+#########++++
+
+## Red Hat FreeIPA
+krb5_kdc_type: Red Hat IPA
+krb5_realm: "{{ realm }}"
+krb5_kdc_admin_user: "{{ freeipa.ipaadmin_user | default(lookup('env', 'IPA_USER', default='Undefined')) }}@{{ krb5_realm }}"
+krb5_kdc_admin_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}"
+krb5_enc_types: "aes256-cts aes128-cts"
+# TODO: This needs to either be explicit or rendered from a host with DNS resolution
+# Cannot rely on localhost to have DNS access, e.g. private networking on EC2
+#krb5_kdc_host: "{{ lookup('community.general.dig', '_ldap._tcp.' + domain +'./SRV', 'flat=0', wantlist=True, fail_on_error=True) | map(attribute='target') | first }}"
+krb5_kdc_host: "{{ groups['freeipa'] | first | default('') }}"
+
+############################################
+###  CM External Auth - FreeIPA as LDAP  ###
+############################################
+
+# Settings for FreeIPA sidecar deployment
+cloudera_manager_external_auth:
+  provider: freeipa
+  external_first: no
+  external_only: no
+
+auth_provider: "{{ auth_providers[cloudera_manager_external_auth.provider] }}"
+
+base_dn: "dc={{ (krb5_realm | lower).split('.') | join(',dc=') }}"
+user_dn: "cn=users,cn=accounts,{{ base_dn }}"
+group_dn: "cn=groups,cn=accounts,{{ base_dn }}"
+
+auth_providers:
+  freeipa:
+    ldap_url: "ldaps://{{ groups['freeipa'] | first | default('') }}:636"
+    ldap_base_dn: "{{ base_dn }}"
+    ldap_bind_user_dn: "uid=admin,{{ user_dn }}"
+    ldap_bind_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}"
+    ldap_search_base:
+      user: "{{ user_dn }}"
+      group: "{{ group_dn }}"
+    ldap_object_class:
+      user: "person"
+      group: "groupofnames"
+    ldap_search_filter:
+     user: uid={0}
+     member: (member={0})    
+    ldap_attr_user_name: "uid"
+    ldap_attr_group_name: "cn"
+    ldap_attr_group_membership: "member"
+    type: LDAP
+
+## TLS signing
+skip_ipa_signing: no # This is the default
+remote_ipa_server: "{{ groups['freeipa'] | first | default('') }}"
+
+tls_key_password: "{{ common_password }}"
+tls_keystore_password: "{{ common_password }}"
+tls_truststore_password: "{{ common_password }}"
+
+ca_server_attrs_root:
+  CN: 'SE-Root CA'
+ca_server_attrs_intermediate:
+  CN: 'SE-Intermediate CA'
+
+# Infrastructure
+infra:
+  aws:
+    region: "{{ infra_region }}"
+    enable_dns: no
+    public_subnets: # TODO: Implement better selection of AZs
+      - az: "{{ infra_region }}a"
+    private_subnets:
+      - az: "{{ infra_region }}b"
+      - az: "{{ infra_region }}c"
+    default_security_group:
+      ingress:
+        - cidr: [ "0.0.0.0/0" ]
+          from: 22
+          to: 22
+          protocol: TCP
+          desc: SSH (Ansible)
+    nodes:
+      # Sidecar FreeIPA for Kerberos and DNS
+      - hostname_prefix: "freeipa"
+        count: 1
+        subnet_index: 0  # TODO: Implement better selection of AZs. this is the combined list of public + private
+        groups:
+          - freeipa
+          - jump_host
+          - nodes
+        instance_type: m5.large
+      # Manager, Master, DB, and CA 
+      - hostname_prefix: "base" # hostname will be of form {{ name_prefix }}-{{ hostname_prefix }}-<index of {{ count }}>
+        count: 1
+        groups: 
+          - cloudera_manager
+          - cluster_masters
+          - cluster
+          - nodes
+          - db_server
+          - linux_nodes
+          - deployment
+        host_template: Masters
+        instance_type: m5.4xlarge
+        root_volume:
+          volume_size: 250
+        subnet_index: 1
+        tls: True
+      # Cluster Worker
+      - hostname_prefix: worker
+        count: 2
+        groups: 
+          - cluster_workers
+          - cluster
+          - nodes
+          - linux_nodes
+          - deployment
+        instance_type: c5.2xlarge
+        subnet_index: 1
+        root_volume:
+          volume_size: 250
+        host_template: Workers
+        tls: True
+      # ECS Master
+      - hostname_prefix: ecs-m
+        count: 1
+        groups: 
+          - cluster_ecs_masters
+          - cluster
+          - nodes
+          - ecs_nodes
+          - small_ecs_nodes
+          - linux_nodes
+          - deployment
+        instance_type: c5.2xlarge
+        subnet_index: 1
+        root_volume:
+          volume_size: 250
+        volumes:
+          - device: /dev/sdb
+            mount: /ecs
+            size: 250
+            type: gp2
+        host_template: ECSMaster
+        tls: True
+      # ECS Workers
+      - hostname_prefix: ecs-w
+        count: 3
+        groups: 
+          - cluster_ecs_workers
+          - cluster
+          - nodes
+          - ecs_nodes
+          - linux_nodes
+          - deployment
+        instance_type: m5.8xlarge
+        subnet_index: 2
+        root_volume:
+          volume_size: 250
+        volumes:
+          - device: /dev/sdb
+            mount: /ecs
+            size: 250
+            type: gp2
+        host_template: ECSWorker
+        tls: True

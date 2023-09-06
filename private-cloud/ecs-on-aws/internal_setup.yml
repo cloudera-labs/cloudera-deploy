@@ -1,0 +1,38 @@
+---
+
+- name: Set up CDP Private Cloud internal prerequisites
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars:
+    definition_path: "./"
+  tasks:
+    - name: Set of deployment variables from definition.yml
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+      when: init__completed is undefined
+
+    - name: Prepare inventory for PvC Plays
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+        tasks_from: prep_pvc.yml
+  tags:
+    - always
+
+- name: Init run tasks for all nodes
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Group hosts by host template and TLS
+      ansible.builtin.include_role:
+        name: cloudera.cluster.deployment.groupby
+
+    - name: Check connectivity to Inventory
+      ansible.builtin.wait_for_connection:
+  tags:
+    - always
+
+- name: Set up internal prerequisites for CDP Private Cloud
+  ansible.builtin.import_playbook: cloudera.exe.pvc_base_prereqs_int.yml
