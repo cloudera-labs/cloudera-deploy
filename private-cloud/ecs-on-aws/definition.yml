@@ -79,7 +79,7 @@ license_local_tmp_path: /tmp/cloudera_license.txt
 ###  RDBMS  ###
 ###############
 database_type: postgresql
-database_version: 10
+database_version: 12
 database_tls: true
 
 #########++++
