@@ -1,0 +1,18 @@
+---
+
+version: 3
+
+images:
+  base_image:
+    name: ghcr.io/wmudge/cldr-runner:aws-tmp-devel-collections
+
+dependencies:
+  galaxy:
+    collections:
+      - name: https://github.infra.cloudera.com/GOES/cloudera.infra.git
+        type: git
+        version: devel
+      - name: freeipa.ansible_freeipa
+        version: 1.11.0
+  python:
+    - dnspython

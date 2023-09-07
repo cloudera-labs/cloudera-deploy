@@ -1,0 +1,233 @@
+---
+
+# Run variable checker
+
+# Provision the infrastructure at the cloud provider
+- name: Provision infrastructure resources
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  module_defaults:
+    # Set your definition-specific inventory host variables here.
+    # NOTE: the 'node' variable is in scope and contains each entry coming from
+    # the Terraform 'nodes' output variable.
+    ansible.builtin.add_host:
+      host_template: "{{ node.metadata.host_template | default(omit) }}"
+      tls: "{{ node.metadata.tls | default(omit) }}"
+      # TODO Review the SSH args, these are overwritten
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -C -o ControlMaster=auto -o ControlPersist=1200s -o BatchMode=yes'
+  tags: infra
+  tasks:
+    - name: Provision the infrastructure resources in the cloud provider
+      when: infra_type != 'static'
+      ansible.builtin.import_role:
+        name: cloudera.infra.provision
+      vars:
+        provision_provider: "{{ infra_type }}"
+        provision_inventory_file: "inventory_static_{{ name_prefix }}_{{ infra_type }}.ini"
+        provision_directory: "tf_deployment_{{ name_prefix }}_{{ infra_type }}"
+        provision_terraform_parallelism: "{{ terraform.parallelism | default(omit) }}"
+        provision_state_storage: "{{ terraform.state.storage }}"
+        provision_create_remote_storage: "{{ terraform.state.create_remote_storage }}"
+        provision_remote_storage_s3_region: "{{ terraform.state.s3_region }}"
+        provision_remote_storage_s3_bucket: "{{ terraform.state.s3_bucket }}"
+        provision_name_prefix: "{{ name_prefix }}"
+        provision_domain_suffix: "{{ domain }}"
+        provision_ssh_keypair_label: "{{ ssh_keypair.label | default(public_key_id) }}"
+        provision_ssh_keypair_public_key: "{{ ssh_keypair.public_key | default(public_key_text) }}"
+        provision_owner_email: "{{ owner_email }}"
+        provision_openstack_network_name: "{{ infra[infra_type].network_name | default(omit) }}"
+        provision_openstack_default_image_name: "{{ infra[infra_type].default_image_name | default(omit) }}"
+        provision_openstack_default_availability_zone: "{{ infra[infra_type].default_availability_zone | default(omit) }}"
+        provision_aws_ec2_region: "{{ infra[infra_type].region | default(omit) }}"
+        provision_aws_ec2_vpc_enable_dns_support: "{{ infra[infra_type].enable_dns | default(omit) }}"
+        provision_aws_ec2_vpc_enable_dns_hostnames: "{{ infra[infra_type].enable_dns | default(omit) }}"
+        provision_aws_ec2_public_subnets: "{{ infra[infra_type].public_subnets | default(omit) }}"
+        provision_aws_ec2_private_subnets: "{{ infra[infra_type].private_subnets | default(omit) }}"
+        provision_aws_ec2_default_security_group_ingress: "{{ infra[infra_type].default_security_group.ingress | default(omit) }}"
+        provision_instances: "{{ infra[infra_type].nodes | default([]) }}"
+        provision_tags: "{{ deployment_tags | default(omit) }}"
+
+# Confirm the availablity of all nodes
+- name: Ensure node readiness
+  hosts: nodes
+  gather_facts: no
+  tasks:
+    - name: Ensure the node is reachable
+      ansible.builtin.wait_for_connection:
+        timeout: 60
+
+# Prepare and mount any attached volumes
+- name: Prepare and mount storage volumes
+  hosts: nodes 
+  gather_facts: no
+  become: True
+  tasks:
+    - name: Prepare storage volumes
+      when: infra_type != "static" and storage_volumes | length > 0
+      ansible.builtin.import_role:
+        name: cloudera.infra.mount
+      vars:
+        mount_volumes: "{{ storage_volumes }}"
+        mount_provider: "{{ infra_type }}"
+
+# Prepare the FreeIPA sidecar services
+- name: Provision FreeIPA services
+  hosts: freeipa
+  gather_facts: yes
+  become: yes
+  vars:
+    enable_dns: "{{ dns_provider | lower == 'freeipa' }}"
+    # If not set specifically: if AWS, then VPC CIDR + 2 (see https://docs.aws.amazon.com/vpc/latest/userguide/vpc-dns.html)
+    resolv_nameservers: "{{ upstream_nameservers | default(default_dns[infra_type]) }}"
+    default_dns:
+      aws: "{{ [ hostvars.localhost.provision.vpc.cidr | ansible.utils.ipmath(2) ] }}"
+  module_defaults:
+    freeipa.ansible_freeipa.ipadnszone:
+      ipaadmin_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}"
+    freeipa.ansible_freeipa.ipadnsrecord:
+      ipaadmin_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}"
+  tasks:
+    - name: Set up the FreeIPA server
+      ansible.builtin.import_role:
+        # name: cloudera.exe.freeipa_server
+        name: cloudera.infra.freeipa_server
+      vars:
+        ipaserver_hostname: "{{ inventory_hostname }}"
+        ipaserver_realm: "{{ freeipa.realm }}"
+        ipaserver_domain: "{{ name_prefix }}.{{ domain }}"
+        ipaserver_no_host_dns: yes
+        ipaserver_setup_firewalld: no
+        ipaserver_setup_dns: "{{ enable_dns }}"
+        ipaserver_resolv_nameservers: "{{ resolv_nameservers }}"
+        ipaserver_auto_reverse: "{{ enable_dns | ternary(True, omit) }}"
+        ipaserver_no_forwarders: "{{ enable_dns | ternary(True, omit) }}"
+        ipaserver_forward_policy: "{{ enable_dns | ternary('only', omit) }}"
+        ipaserver_recursion_acl_cidr: "{{ enable_dns | ternary(hostvars.localhost.provision.vpc.cidr, omit) }}"
+        ipaserver_copy_csr_to_controller: yes
+        ipaclient_mkhomedir: yes
+        ipadm_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}" # TODO Add test for these parameters - error in role is opaque
+        ipaadmin_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}"
+    
+    - name: Configure provisioned FreeIPA global DNS
+      when: enable_dns
+      block:
+        - name: Create DNS zone for '{{ name_prefix }}.{{ domain }}' in provisioned FreeIPA service
+          freeipa.ansible_freeipa.ipadnszone:
+            zone_name: "{{ name_prefix }}.{{ domain }}"
+            dynamic_update: yes
+            allow_sync_ptr: yes
+            forward_policy: none
+
+        - name: Create reverse DNS zone for '{{ hostvars.localhost.provision.vpc.cidr }}'
+          freeipa.ansible_freeipa.ipadnszone:
+            name_from_ip: "{{ hostvars.localhost.provision.vpc.cidr }}"
+            dynamic_update: yes
+            allow_sync_ptr: yes
+
+        - name: Update DNS for ECS 'apps.{{ name_prefix }}.{{ domain }}'
+          when: "'cluster_ecs_masters' in groups"
+          block:
+            - name: Ensure DNS zone for ECS 'apps'
+              freeipa.ansible_freeipa.ipadnszone:
+                zone_name: "apps.{{ name_prefix }}.{{ domain }}"
+                dynamic_update: yes
+                allow_sync_ptr: yes
+                forward_policy: none
+
+            - name: Ensure DNS wildcard records for ECS 'apps' and domain
+              freeipa.ansible_freeipa.ipadnsrecord:
+                name: "*"
+                zone_name: "apps.{{ name_prefix }}.{{ domain }}"
+                record_type: "A"
+                record_value: "{{ hostvars[groups['cluster_ecs_masters'][0]]['ansible_host'] }}"
+                create_reverse: no
+
+        - name: Resolve provisioned FreeIPA DNS server addresses
+          ansible.builtin.set_fact:
+            dns_server_ips: "{{ dns_server_ips | default([]) | union([ ansible_default_ipv4['address'] ]) }}"
+          delegate_to: localhost
+          delegate_facts: true
+
+# Update existing FreeIPA DNS services
+- name: Configure existing FreeIPA global DNS 
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    enable_dns: "{{ dns_provider | lower == 'freeipa' }}"
+    dns_server: "{{ freeipa.server | default(lookup('ansible.builtin.env', 'IPA_HOST', default='Undefined')) }}"
+  module_defaults:
+    community.general.ipa_dnszone:
+      ipa_host: "{{ dns_server }}"
+      ipa_user: "{{ freeipa.ipaadmin_user | default(lookup('ansible.builtin.env', 'IPA_USER', default='Undefined')) }}"
+      ipa_pass: "{{ freeipa.ipaadmin_password | default(lookup('ansible.builtin.env', 'IPA_PASSWORD', default='Undefined')) }}"
+  tasks:
+    - name: Create DNS zone for '{{ name_prefix }}.{{ domain }}' in existing FreeIPA service
+      when: enable_dns and dns_server is defined and 'freeipa' not in groups
+      block:
+        - name: Create DNS zone for '{{ name_prefix }}.{{ domain }}'
+          community.general.ipa_dnszone:
+            validate_certs: no
+            dynamicupdate: yes
+            allowsyncptr: yes
+            zone_name: "{{ name_prefix }}.{{ domain }}"
+            state: present
+
+        - name: Create reverse DNS zone for '{{ infra_cidr }}'
+          community.general.ipa_dnszone:
+            validate_certs: no
+            dynamicupdate: yes
+            allowsyncptr: yes
+            zone_name: "{{ infra_cidr | ansible.utils.ipaddr('revdns') }}"
+            state: present
+
+        - name: Update DNS for ECS 'apps.{{ name_prefix }}.{{ domain }}'
+          when: "'cluster_ecs_masters' in groups"
+          block:
+            - name: Ensure DNS zone for ECS 'apps'
+              community.general.ipa_dnszone:
+                zone_name: "apps.{{ name_prefix }}.{{ domain }}"
+                dynamic_update: yes
+                allow_sync_ptr: yes
+                validate_certs: no
+
+            - name: Ensure DNS wildcard records for ECS 'apps' and domain
+              community.general.ipa_dnszone:
+                name: "*"
+                zone_name: "apps.{{ name_prefix }}.{{ domain }}"
+                record_type: "A"
+                record_value: "{{ hostvars[groups['cluster_ecs_masters'][0]]['ansible_host'] }}"
+                validate_certs: no
+
+        - name: Resolve existing FreeIPA DNS server addresses
+          ansible.builtin.set_fact:
+            dns_hosts: "{{ [ dns_server ] }}"
+            dns_server_ips: "{{ [ lookup('community.general.dig', dns_server ) ] }}"
+
+# Enroll deployment hosts with FreeIPA Kerberos and possibly with DNS
+- name: Register hosts with FreeIPA
+  hosts: nodes:!freeipa
+  gather_facts: yes
+  become: True
+  tasks:
+    - name: Register host with FreeIPA services
+      when: krb5_kdc_type == "Red Hat IPA"
+      ansible.builtin.import_role:
+        # name: cloudera.exe.freeipa_client
+        name: cloudera.infra.freeipa_client
+      vars:
+        ipaserver_domain: "{{ [name_prefix, domain] | join('.') }}"
+        ipaserver_realm: "{{ freeipa.realm }}"
+        ipa_hosts: "{{ groups['freeipa'] | default(hostvars.localhost.dns_hosts) }}"
+        ipa_server_ips: "{{ hostvars.localhost.dns_server_ips }}"
+        ipaadmin_password: "{{ freeipa.ipaadmin_password | default(lookup('ansible.builtin.env', 'IPA_PASSWORD', default='Undefined')) }}"
+        ipaadmin_principal: "{{ freeipa.ipaadmin_user | default(lookup('ansible.builtin.env', 'IPA_USER', default=omit)) }}"
+        enable_dns: "{{ dns_provider | lower == 'freeipa' }}"  
+
+# Prepare SME Lab resources
+- name: Prepare TLS and supporting services resources
+  import_playbook: pre_setup_resources.yml
+  tags:
+    - prereq
+    - infra
