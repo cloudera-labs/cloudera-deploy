@@ -6,11 +6,9 @@
 
 To run, you need:
 
-* Docker (or a Docker clone[^1])
+* Docker (or a Docker alternative)
 * AWS credentials (set via `AWS_PROFILE`)
 * CDP credentials (set via `CDP_PROFILE`)
-
-[^1]: For example, [OrbStack](https://orbstack.dev) works well on OSX.
 
 ## Set Up
 

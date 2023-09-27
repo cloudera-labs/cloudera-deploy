@@ -1,48 +1,29 @@
 # Frequently Asked Questions
 
+Be sure to check out the [Discussions > Help](https://github.com/cloudera-labs/cloudera-deploy/discussions/categories/help) category for the latest answers. 
+
 ## Where did everything go?
 
 The project undertook some serious remodeling, but rest assured, your definitions will still work as they did in the previous version of `cloudera-deploy`.  
 
 Okay, but where did everything go? Well...
 
-1. The `quickstart.sh` migrated to `ansible-navigator`. Both of these applications use a container based on `ansible-runner`, i.e. [`cldr-runner`](https://github.com/cloudera-labs/cldr-runner), to execute the playbooks, yet `ansible-navigator` is configuration-driven and better aligned with how AWX runs Ansible in containers. Also, `ansible-navigator` brings a nifty UI and the ease of use to handle different execution modes.
+1. The `quickstart.sh` migrated to `ansible-navigator`. Both of these applications use a container based on `ansible-runner`, i.e. [`cldr-runner`](https://github.com/cloudera-labs/cldr-runner), to execute the playbooks, yet `ansible-navigator` is configuration-driven and better aligned with how AWX runs Ansible in containers. Also, `ansible-navigator` brings a nifty text-based UI (TUI) and the ease of use to handle different execution modes.
   
     We also migrated `cldr-runner` to use `ansible-builder`, but you can read more about that effort at the [`cldr-runner`](https://github.com/cloudera-labs/cldr-runner) project.
 
 1. The original `cloudera-deploy` playbooks moved into `cloudera.exe`. Starting with Ansible `2.11`, [collections can contain playbooks](https://docs.ansible.com/ansible/latest/collections_guide/collections_using_playbooks.html#using-a-playbook-from-a-collection). We call the playbooks using `import_playbook` like roles.
 
-    PLEASE NOTE, if you are developing your own project playbooks, you must first set up your `cloudera-deploy` variables _before_ calling the playbooks by running the `cloudera.exe.init_deployment` role on `localhost`.
+    > [!IMPORTANT]
+    > If you are developing your own project playbooks, you must first set up your `cloudera-deploy` variables _before_ calling the playbooks by running the `cloudera.exe.init_deployment` role.
 
-1. The _run-levels_ still remain; you can still use `-t infra` for example. However, the playbooks themselves are more granular and overall set up and tear down processes are now separate playbooks.
+1. The _runlevels_ still remain; you can still use `-t infra` for example. However, the playbooks themselves are more granular and overall set up and tear down processes are now separate playbooks.
   
     This change promotes composibility and reusability, and we are going to continue to break apart the functions and operations within `cloudera-deploy` and -- most importantly -- the collections that drive this application. We fully expect that you will want to adapt and create your own "deploy" application, one that caters to _your_ needs and operating parameters. Switching to a more granular, more modular approach is key to this objective.
 
-## How to I add _extra variables_ and tags to `ansible-navigator`?
+## How do I run my `cloudera-deploy` V1 playbooks in `ansible-navigator`?
 
-If you want to run a playbook with a given tag, e.g. `-t infra`, then simply add it as a parameter to the `ansible-navigator` commandline. For example, `ansible-navigator run playbook.yml -t infra`. 
-
-Like tags, so you can pass _extra variables_ to `ansible-navigator` and the underlying Ansible command. For example, `ansible-navigator run playbook.yml -e @some_config.yml -e some_var=yes`.
-
-## How do I tell `ansible-navigator` where to find collections and roles?
-
-By default, `cloudera-deploy` expects to use the collections, roles, and libraries within the _execution environment_ container, that is `cldr-runner`. Make sure you do _not_ have `ANSIBLE_COLLECTIONS_PATH` or `ANSIBLE_ROLES_PATH` set or `ansible-navigator` will pick up these environment variables and pass them to the running container. The underlying `ansible` application, like `ansible-playbook` will then pick up these environment variables and attempt to use them if set! This behavior is great if you want to use host-based collections, e.g. local development, but you need to ensure that you update the `ansible-navigator.yml` configuration file to mount the host collection and/or role directories into the execution environment container.
-
-## `ansible-navigator` hangs when I run my playbook. What is going on?
-
-`ansible-navigator` does not handle user prompts when running in the `curses` UI, so actions in your playbook like:
-
-* Vault passwords
-* SSH passphrases
-* Debugger statements
-
-will not work out-of-the-box. You can enable `ansible-navigator` to run with prompts, but doing so will also disable the UI and instead run its operations using `stdout`.  Try adding:
-
-```bash
-ansible-navigator run --enable-prompts ...
-```
-
-to your execution.
+See the [Migration V1](MIGRATION_V1.md) document for details.
 
 ## How can I view a previous `ansible-navigator` run to debug an issue?
 
@@ -53,14 +34,6 @@ ansible-navigator replay runs/<playbook name>-<timestamp>.json
 ```
 
 Then you can use the UI to review the plays, tasks, and inventory for the previous run!
-
-## How can I enable the playbook debugger?
-
-The [playbook debugger](https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_debugger.html) is enabled in `ansible-navigator` by setting the debugger and then enabling prompts. For example,
-
-```bash
-ANSIBLE_ENABLE_TASK_DEBUGGER=True ansible-navigator run --enable-prompts main.yml
-```
 
 ## How can I select just a single subnet using `subnet_filter`, say for a CDE definition?
 
@@ -113,23 +86,4 @@ You can [test sample filters](https://play.jmespath.org/?u=45e4d839-15f9-4569-94
     "subnetName": "sbnt-pvt-0"
   }
 ]
-```
-
-## How to I configure SSH to avoid a "Failed to connect to new control master" error?
-
-When running connecting to a host via SSH while running `ansible-navigator`, in particular when you are working with Terraform inventory managed by the `cloud.terraform` inventory plugin, you might encounter the following error:
-
-```
-Failed to connect to the host via ssh: Control socket connect(/runner/.ansible/cp/b44b170fff): Connection refused
-Failed to connect to new control master
-```
-
-To resolve, be sure to add the following variable to your `ansible-navigator.yml` configuration file:
-
-```yaml
-ansible-navigator:
-  execution-environment:
-    environment-variables:
-      set:
-        ANSIBLE_SSH_CONTROL_PATH: "/dev/shm/cp%%h-%%p-%%r"
 ```
