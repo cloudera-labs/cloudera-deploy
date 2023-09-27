@@ -51,7 +51,7 @@ For more information on how to get involved with the `cloudera-deploy` project, 
 `cloudera-deploy` itself is not an application, but its projects and examples expect to run within an _execution environment_ called `cldr-runner`. This _execution environment_ typically is a container that encapsulates the runtimes, libraries, Python and system dependencies, and general configurations needed to run an Ansible- and Terraform-enable project. 
 
 > [!NOTE]
-> It is worth pointing out that you don't _have_ to use a container, but setting up a local execution environment is out-of-scope of `cloudera-deploy`; the projects in `cloudera-deploy` will run in any _execution environment_ like [AWX](https://github.com/ansible/awx)/[Red Hat Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). If you want to learn more about setting up a local execution environment, head over to [cloudera-labs/cldr-runner](https://github.com/cloudera-labs/cldr-runner).
+> It is worth pointing out that you don't _have_ to use a container, but setting up a local execution environment is out-of-scope of `cloudera-deploy`; the projects in `cloudera-deploy` will run in any _execution environment_, for example [AWX](https://github.com/ansible/awx)/[Red Hat Ansible Automation Platform (AAP)](https://www.redhat.com/en/technologies/management/ansible). If you want to learn more about setting up a local execution environment, head over to [cloudera-labs/cldr-runner](https://github.com/cloudera-labs/cldr-runner).
 
 The `cloudera-deploy` projects and their playbooks are built with the automation resources provided by `cldr-runner`, notably, but not exclusively:
 
@@ -61,7 +61,7 @@ The `cloudera-deploy` projects and their playbooks are built with the automation
 * [`cdp-tf-quickstarts`](https://github.com/cloudera-labs/cdp-tf-quickstarts) - CDP quickstarts using the Terraform Module for CDP Prerequisites
 * [`terraform-cdp-modules`](https://github.com/cloudera-labs/terraform-cdp-modules) - Terraform Modules for CDP Prerequisites
 
-Besides these resources within `cldr-runner`, generally `cloudera-deploy` projects will need one or more of the following **credentials**:
+Besides these resources within `cldr-runner`, `cloudera-deploy` projects generally will need one or more of the following **credentials**:
 
 ## CDP Public Cloud
 
@@ -69,7 +69,7 @@ For CDP Public Cloud, you will need an _Access Key_ and _Secret_ set in your use
 
 ## Cloud Providers
 
-For Azure and AWS infrastructure, the process is similar, and these parameters may likewise be overridden.
+For Azure and AWS infrastructure, the process is similar to CDP Public Cloud, and these parameters may likewise be overridden.
 
 For Google Cloud, we suggest you issue a _credentials file_, store it securely in your profile, and then reference that file as needed by a project's configuration, as this works best with both CLI and Ansible Gcloud interactions.
 
@@ -104,7 +104,8 @@ To use the projects in `cloudera-deploy`, you need to first set up `ansible-navi
     pip install ansible-core ansible-navigator
    ```
 
-> [!NOTE] Further details can be found in the [NAVIGATOR document](https://github.com/cloudera-labs/cldr-runner/blob/main/NAVIGATOR.md) in `cloudera-labs/cldr-runner`.
+> [!NOTE]
+> Further details can be found in the [NAVIGATOR document](https://github.com/cloudera-labs/cldr-runner/blob/main/NAVIGATOR.md) in `cloudera-labs/cldr-runner`.
 
 Then, clone this project.
 
@@ -128,7 +129,7 @@ If it is not running, please check your prerequisites process for Docker to inst
 
 ## Credentials
 
-To check that your various credentials are available and valid -- that they _match the expected accounts_ -- you can use `ansible-navigator` compare the user and account IDs produced via CLI with those found in the browser UI of the associated service.
+To check that your various credentials are available and valid -- that they _match the expected accounts_ -- you can use `ansible-navigator` within your project and compare the user and account IDs produced with those found in the browser UI of the associated service.
 
 > [!IMPORTANT]
 > All of the instructions below assume that your project is using the correct CSP-flavored image of `cldr-runner`. If in doubt, you can use the `full` image which has all supported CSP resources.
@@ -139,7 +140,7 @@ To check that your various credentials are available and valid -- that they _mat
 ansible-navigator exec -- cdp iam get-user
 ```
 
-> [!IMPORTANT]
+> [!NOTE]
 > If you do not yet have a CDP Public Cloud credential, follow [these instructions](https://docs.cloudera.com/cdp-public-cloud/cloud/cli/topics/mc-cli-generating-an-api-access-key.html) on the Cloudera website.
 
 See [CDP CLI](https://docs.cloudera.com/cdp-public-cloud/cloud/cli/topics/mc-cdp-cli.html) for further details.
@@ -169,7 +170,7 @@ See [Azure subscription requirements](https://docs.cloudera.com/cdp-public-cloud
 ansible-navigator exec -- gcloud auth list
 ```
 
-> [!IMPORTANT]
+> [!NOTE]
 > You need a provisioning Service Account for GCP setup (typically referenced by the `gcloud_credential_file` entry). If you do not yet have a Provisioning Service Account you can [learn more](https://docs.cloudera.com/cdp-public-cloud/cloud/requirements-gcp/topics/mc-gcp-permissions.html) on the Cloudera website.
 
 See [GCP requirements](https://docs.cloudera.com/cdp-public-cloud/cloud/requirements-gcp/topics/mc-requirements-gcp.html) for further details.
@@ -191,7 +192,7 @@ Occasionally, the instructions may ask you to run an individual module, such as 
 
 The projects are configured to log their activities. In each, you will find a `runs/` directory that houses all of the runtime artifacts of `ansible-navigator` and `ansible-runner` (the Ansible application and interface that does the actual Ansible command dispatching).
 
-The log files are structured (JSON) and are by playbook and timestamp. If you want to review -- or _replay_ in `ansible-navigator`-speak -- you can load them into `ansible-navigator`:
+The log files are structured (JSON) and are indexed by playbook and timestamp. If you want to review, rather _replay_, you can load them into `ansible-navigator`:
 
 ```bash
 ansible-navigator replay <playbook execution run file>.json
@@ -199,7 +200,7 @@ ansible-navigator replay <playbook execution run file>.json
 
 ### Upgrades
 
-The `cldr-runner` image updates fairly often to include the latest libraries, new features and fixes. Depending on how `ansible-navigator` is configured, the application  will check for an updated container image if it is missing.
+The `cldr-runner` image updates fairly often to include the latest libraries, new features and fixes. Depending on how `ansible-navigator` is configured (see the `ansible-navigator.yml` file), the application  will check for an updated container image only if it is missing.
 
 You can easily change this behavior; change your `ansible-navigator.yml` configuration in your project to:
 
