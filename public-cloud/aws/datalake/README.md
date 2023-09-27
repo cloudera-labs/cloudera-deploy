@@ -12,12 +12,12 @@ To run, you need:
 
 ## Set Up
 
-First, set up your `ansible-navigator` aka `cdp-navigator` environment -- follow the instructions in the top-level [README](../../../README.md#setting-up-ansible-navigator).
+First, set up your `ansible-navigator` aka `cdp-navigator` environment -- follow the instructions in the [NAVIGATOR document](https://github.com/cloudera-labs/cldr-runner/blob/main/NAVIGATOR.md) in `cloudera-labs/cldr-runner`.
 
 Then, clone this project and change your working directory.
 
 ```bash
-git clone https://github.com/cloudera-labs/cloudera-deploy.git; cd cloudera-deploy/public-cloud/aws/base
+git clone https://github.com/cloudera-labs/cloudera-deploy.git; cd cloudera-deploy/public-cloud/aws/datalake
 ```
 
 ## Configure
@@ -37,11 +37,16 @@ admin_password: "Secret"  # 1 upper, 1 special, 1 number, 8-64 chars.
 infra_region:   us-east-2
 ```
 
-NOTE: You can override these parameters with any typical Ansible _extra variables_ flags, i.e. `-e admin_password=my_password`. See the [FAQ](../../../FAQ.md#how-to-i-add-extra-variables-and-tags-to-ansible-navigator) for details.
+> [!NOTE]
+> You can override these parameters with any typical Ansible _extra variables_ flags, i.e. `-e admin_password=my_password`. See the [cldr-runner FAQ](https://github.com/cloudera-labs/cldr-runner/blob/main/FAQ.md#how-to-i-add-extra-variables-and-tags-to-ansible-navigator) for details.
 
 ### SSH Keys
 
-This definition will create a new SSH keypair on the host in your `~/.ssh` directory if you do not specify a SSH public key.  If you wish to use an existing SSH key already loaded into AWS, set `public_key_id` to the key's label. If you wish to use an existing SSH key, but need to have it loaded into AWS, then set `public_key_file` to the key's path.
+This definition will create a new SSH keypair on the host in your `~/.ssh` directory if you do not specify a SSH public key.  
+
+If you wish to use an existing SSH key already loaded into AWS, set `public_key_id` to the key's label in AWS. 
+
+If you wish to use an existing SSH key, but need to have it loaded into AWS, then set `public_key_file` to the key's local path.
 
 ## Execute
 

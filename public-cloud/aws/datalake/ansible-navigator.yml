@@ -49,9 +49,6 @@ ansible-navigator:
       arguments:
         - "--tls-verify=false"
     volume-mounts:
-      - src: "${ANSIBLE_COLLECTIONS_PATH}"
-        dest: "${ANSIBLE_COLLECTIONS_PATH}"
-        options: "Z"
       - src: "~/.aws"
         dest: "/runner/.aws"
         options: "Z"
