@@ -12,7 +12,7 @@ To run, you need:
 
 ## Set Up
 
-First, set up your `ansible-navigator` aka `cdp-navigator` environment -- follow the instructions in the top-level [README](../../../README.md#setting-up-ansible-navigator).
+First, set up your `ansible-navigator` aka `cdp-navigator` environment -- follow the instructions in the [NAVIGATOR document](https://github.com/cloudera-labs/cldr-runner/blob/main/NAVIGATOR.md) in `cloudera-labs/cldr-runner`.
 
 Then, clone this project and change your working directory.
 
@@ -37,7 +37,8 @@ admin_password: "Secret"  # 1 upper, 1 special, 1 number, 8-64 chars.
 infra_region:   us-east-2
 ```
 
-NOTE: You can override these parameters with any typical Ansible _extra variables_ flags, i.e. `-e admin_password=my_password`. See the [FAQ](../../../FAQ.md#how-to-i-add-extra-variables-and-tags-to-ansible-navigator) for details.
+> [!NOTE]
+> You can override these parameters with any typical Ansible _extra variables_ flags, i.e. `-e admin_password=my_password`. See the [cldr-runner FAQ](https://github.com/cloudera-labs/cldr-runner/blob/main/FAQ.md#how-do-i-add-extra-variables-and-tags-to-ansible-navigator) for details.
 
 ### SSH Keys
 
