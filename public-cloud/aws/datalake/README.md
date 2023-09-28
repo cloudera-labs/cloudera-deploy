@@ -38,7 +38,7 @@ infra_region:   us-east-2
 ```
 
 > [!NOTE]
-> You can override these parameters with any typical Ansible _extra variables_ flags, i.e. `-e admin_password=my_password`. See the [cldr-runner FAQ](https://github.com/cloudera-labs/cldr-runner/blob/main/FAQ.md#how-to-i-add-extra-variables-and-tags-to-ansible-navigator) for details.
+> You can override these parameters with any typical Ansible _extra variables_ flags, i.e. `-e admin_password=my_password`. See the [cldr-runner FAQ](https://github.com/cloudera-labs/cldr-runner/blob/main/FAQ.md#how-do-i-add-extra-variables-and-tags-to-ansible-navigator) for details.
 
 ### SSH Keys
 
