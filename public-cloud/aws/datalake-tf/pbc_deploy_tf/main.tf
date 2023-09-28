@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module "cdp_deploy" {
-  source = "git::https://github.com/cloudera-labs/terraform-cdp-modules.git//modules/terraform-cdp-deploy?ref=v0.2.0"
+  source = "git::https://github.com/cloudera-labs/terraform-cdp-modules.git//modules/terraform-cdp-deploy?ref=v0.3.0"
 
   env_prefix          = var.env_prefix
   infra_type          = "aws"

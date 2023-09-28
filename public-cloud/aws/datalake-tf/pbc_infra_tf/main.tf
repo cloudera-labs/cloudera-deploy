@@ -64,7 +64,7 @@ data "cdp_environments_aws_credential_prerequisites" "cdp_prereqs" {}
 ##### Create the AWS pre-requisite resources for CDP #####
 # Using the terraform-cdp-aws-pre-reqs module
 module "cdp_aws_prereqs" {
-  source = "git::https://github.com/cloudera-labs/terraform-cdp-modules.git//modules/terraform-cdp-aws-pre-reqs?ref=v0.2.0"
+  source = "git::https://github.com/cloudera-labs/terraform-cdp-modules.git//modules/terraform-cdp-aws-pre-reqs?ref=v0.3.0"
 
   env_prefix = var.env_prefix
   aws_region = var.aws_region
