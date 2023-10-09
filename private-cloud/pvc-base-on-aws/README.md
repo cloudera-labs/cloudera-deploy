@@ -2,51 +2,19 @@
 
 > Constructs a CDP Private Cloud Base cluster running on AWS.
 
+## Known Issues
+
+| Issue | Description | Workaround |
+|-------|-------------|------------|
+| Cluster instances unavailable after the `external_setup.yml` Playbook | The cluster EC2 instances become unavailable after the `external_setup.yml` Playbook. During subsequent playbooks the hosts becomes unreachable and in the EC2 console the VM instances fail the reachability health check. | Restart the EC2 instances via the console. |
+
 ## Requirements
 
-This example requires an execution environment with dependencies to run the automation; and a set of configuration variables.
+To run, you need:
 
-We provide instructions for using a container based execution environment. 
-
-### Container Execution Environment
-
-1. Create and activate a new `virtualenv` and install `ansible-core` and `ansible-navigator`
-
-    ```bash
-    python -m venv ~/cdp-navigator; 
-
-    source ~/cdp-navigator/bin/activate; 
-
-    pip install ansible-core==2.12.10 ansible-navigator==3.4.0
-    ```
-
-1. Clone this repository.
-
-    ```bash
-    git clone https://github.com/cloudera-labs/cloudera-deploy.git;
-    ```
-
-1. Change your working directory to this project.
-
-    ```bash
-    cd cloudera-deploy/private-cloud/pvc-base-on-aws
-    ```
-
-1. We currently need to build a local `cldr-runner` image for use as an Execution Environment. _(This is necessary at this point in the release cycle. It will become optional.)_
-
-    ```bash
-    ansible-navigator builder build --prune-images -v 3 --tag ghcr.io/cloudera-labs/cldr-runner:pvc-tmp-devel-collections
-    ```
-
-This step sometimes takes a ~~number of minutes~~ long time to complete. YMMV.
-
-Once constructed, you can check the image by running `ansible-navigator` and using the prompts to examine:
-
-```bash
-ansible-navigator images
-```
-
-Or by running the Docker command directly, `docker image ls`.
+* Docker (or a Docker alternative)
+* AWS credentials (set via `AWS_PROFILE`)
+* CDP Private Cloud Base license file credentials (set via `CDP_LICENSE_FILE`)
 
 ### Configuration Variables
 
@@ -65,7 +33,6 @@ Configuration is passed via environment variables and an user-facing configurati
     | `AWS_PROFILE` | The profile label for your AWS credentials. Otherwise, use the associated `AWS_*` parameters. Used also for remote storage of Terraform state in AWS. | Mandatory |
 
 > **_NOTE:_** For OSX, set the following: `export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` to allow the WinRM modules to function.
-
 
 #### Configuration file variables
 
