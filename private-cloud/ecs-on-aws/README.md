@@ -38,7 +38,7 @@ Configuration is passed via environment variables and an user-facing configurati
 
 Edit the `config.yml` user-facing configuration file to match your particular deployment.
 
-*NOTE:* `name_prefix` should be 4-8 characters and is the "primary key" for the deployment. `owner_prefix` is used in circumstances to differentiate resources such as the SSH key label in the cloud provider and the subdomain(s) for the private DNS service.
+*NOTE:* `name_prefix` should be 4-7 characters and is the "primary key" for the deployment. `owner_prefix` is used in circumstances to differentiate resources such as the SSH key label in the cloud provider and the subdomain(s) for the private DNS service.
 
 ```yaml
 name_prefix:       "labaw"                          # CHANGE THIS
