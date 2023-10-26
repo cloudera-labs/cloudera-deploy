@@ -21,7 +21,7 @@ PROVIDER="${provider:-full}"
 IMAGE_VER="${image_ver:-v1.7.4}"
 IMAGE_NO_PULL="${no_pull:+true}"
 CONTAINER_NAME="${container:-cloudera-deploy}"
-DEPLOY_VER="${deploy_ver:-release/v1.7.0}"
+DEPLOY_VER="${deploy_ver:-v1.7.1}"
 
 IMAGE_TAG="${PROVIDER}-${IMAGE_VER}"
 IMAGE_FULL_NAME="${IMAGE_NAME}:${IMAGE_TAG}"
