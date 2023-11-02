@@ -134,6 +134,9 @@ To check that your various credentials are available and valid -- that they _mat
 > [!IMPORTANT]
 > All of the instructions below assume that your project is using the correct CSP-flavored image of `cldr-runner`. If in doubt, you can use the `full` image which has all supported CSP resources.
 
+> [!WARNING]
+> Be sure you are _within_ a project directory that has an `ansible-navigator.yml` configuration file that uses the `cldr-runner` image!
+
 ### CDP Public Cloud
 
 ```
