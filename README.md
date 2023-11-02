@@ -91,7 +91,8 @@ To use the projects in `cloudera-deploy`, you need to first set up `ansible-navi
    You can name your virtual environment anything you want; by convention, we like to call it `cdp-navigator`.
 
    ```bash
-   python -m venv ~/cdp-navigator; source ~/cdp-navigator/bin/activate;
+   # Note! You will need Python 3.9 or higher!
+   python3.9 -m venv ~/cdp-navigator; source ~/cdp-navigator/bin/activate;
    ```
 
    This step is _highly recommended_ yet optional.
