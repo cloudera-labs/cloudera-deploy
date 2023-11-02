@@ -18,9 +18,10 @@ set -e
 
 IMAGE_NAME="${image_name:-ghcr.io/cloudera-labs/cldr-runner}"
 PROVIDER="${provider:-full}"
-IMAGE_VER="${image_ver:-latest}"
+IMAGE_VER="${image_ver:-v1.7.4}"
 IMAGE_NO_PULL="${no_pull:+true}"
 CONTAINER_NAME="${container:-cloudera-deploy}"
+DEPLOY_VER="${deploy_ver:-v1.7.1}"
 
 IMAGE_TAG="${PROVIDER}-${IMAGE_VER}"
 IMAGE_FULL_NAME="${IMAGE_NAME}:${IMAGE_TAG}"
@@ -58,9 +59,9 @@ fi
 # If CLDR_COLLECTION_PATH is set, the default version in the container will be removed and this path added to the Ansible Collection path
 # The path supplied must be relative to PROJECT_DIR, e.g. ansible_dev/collections
 if [ -n "${CLDR_COLLECTION_PATH}" ]; then
-  echo "Path to custom Cloudera Collection supplied as ${CLDR_COLLECTION_PATH}, adding to Ansible Collection path"
-  ANSIBLE_COLLECTIONS_PATH="/opt/cldr-runner/collections:/runner/project/${CLDR_COLLECTION_PATH}"
-  QUICKSTART_PROMPT='Quickstart? Run this command -- ansible-playbook project/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" -t run,default_cluster'
+  echo "Path to custom Cloudera Collection supplied as ${CLDR_COLLECTION_PATH}, appending to Ansible Collection path"
+  ANSIBLE_COLLECTIONS_PATH="/runner/project/${CLDR_COLLECTION_PATH}:/opt/cldr-runner/collections"
+  QUICKSTART_PROMPT='Quickstart? Run this command -- ansible-playbook /opt/cloudera-deploy/main.yml -e "definition_path=examples/sandbox" -t run,default_cluster'
 else
   echo "Custom Cloudera Collection path not found"
   ANSIBLE_COLLECTIONS_PATH="/opt/cldr-runner/collections"
@@ -138,11 +139,11 @@ if [ ! "$(docker ps -q -f name=${CONTAINER_NAME})" ]; then
       /usr/bin/env bash
 
     echo "Installing the cloudera-deploy project to the execution container '${CONTAINER_NAME}'"
-    docker exec -td "${CONTAINER_NAME}" /usr/bin/env git clone https://github.com/cloudera-labs/cloudera-deploy.git /opt/cloudera-deploy --depth 1
+    docker exec -td "${CONTAINER_NAME}" /usr/bin/env git clone https://github.com/cloudera-labs/cloudera-deploy.git /opt/cloudera-deploy -b "${DEPLOY_VER}" --depth 1
 
-    if [ -n "${CLDR_COLLECTION_PATH}" ]; then
-      docker exec -td "${CONTAINER_NAME}" /usr/bin/env rm -rf /opt/cldr-runner/collections/ansible_collections/cloudera
-    fi
+    # if [ -n "${CLDR_COLLECTION_PATH}" ]; then
+    #   docker exec -td "${CONTAINER_NAME}" /usr/bin/env rm -rf /opt/cldr-runner/collections/ansible_collections/cloudera
+    # fi
     if [ -n "${CLDR_PYTHON_PATH}" ]; then
       docker exec -td "${CONTAINER_NAME}" pip uninstall -y cdpy
     fi
