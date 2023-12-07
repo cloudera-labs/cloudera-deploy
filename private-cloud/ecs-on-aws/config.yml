@@ -1,0 +1,18 @@
+---
+
+name_prefix:       "labaw"                          # CHANGE THIS
+owner_prefix:      "pvc-ecs"                        
+owner_email:       "example@cloudera.com"            
+infra_region:      "eu-west-1"                      
+infra_type:        "aws"                            # "aws", "static"
+domain:            "{{ owner_prefix }}.cldr.example"   # The private, adhoc subdomain (name_prefix.owner_prefix.cldr.demo)
+realm:             "CLDR.EXAMPLE"                      # The Kerberos realm
+common_password:   "Example776"                   
+admin_password:    "Example776"                   # "Main" default password
+deployment_tags:
+  owner: "{{ owner_prefix }}"
+  email: "{{ owner_email }}"
+  project: "PvC ECS Lab - {{ owner_prefix }}-{{ name_prefix }}"
+  enddate: "{{ ('%m%d%Y' | strftime((ansible_date_time.epoch | int) + (90 * 86400))) }}"
+  deployment: "{{ name_prefix }}"
+  deploy-tool: cloudera-deploy

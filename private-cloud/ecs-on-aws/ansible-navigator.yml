@@ -1,0 +1,50 @@
+---
+
+ansible-navigator:
+  playbook-artifact:
+      save-as: "runs/{playbook_name}-{time_stamp}.json"
+
+  ansible-runner:
+    artifact-dir: runs
+    rotate-artifacts-count: 3
+
+  logging:
+    level: debug
+    append: False
+
+  execution-environment:
+    container-engine: docker
+    enabled: True
+    environment-variables:
+      pass:
+        - AWS_PROFILE
+        - CDP_PROFILE
+        - SSH_PUBLIC_KEY_FILE
+        - CDP_LICENSE_FILE
+        - IPA_USER
+        - IPA_PASSWORD        
+      set:
+        ANSIBLE_SSH_CONTROL_PATH: "/dev/shm/cp%%h-%%p-%%r"
+        ANSIBLE_CALLBACK_WHITELIST: "ansible.posix.profile_tasks"
+        ANSIBLE_GATHERING: "smart"
+        ANSIBLE_DEPRECATION_WARNINGS: False
+        ANSIBLE_HOST_KEY_CHECKING: False
+        ANSIBLE_SSH_RETRIES: 10
+    image: ghcr.io/cloudera-labs/cldr-runner:pvc-tmp-devel-collections
+    pull:
+      arguments:
+        - "--tls-verify=false"
+    volume-mounts:
+      - src: "${SSH_PUBLIC_KEY_FILE}"
+        dest: "${SSH_PUBLIC_KEY_FILE}"
+      - src: "${CDP_LICENSE_FILE}"
+        dest: "${CDP_LICENSE_FILE}"
+      - src: "~/.aws"
+        dest: "/runner/.aws"
+        options: "Z"
+        options: "Z"
+      - src: "~/.ssh"
+        dest: "/runner/.ssh"
+        options: "Z"
+    container-options:
+      - "--network=host"
