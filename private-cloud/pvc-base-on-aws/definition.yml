@@ -1,26 +1,24 @@
+# Copyright 2023 Cloudera, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
-kerberos_activated: True
-encryption_activated: True
-# tls_activated: True
-# autotls: False
+### Infrastructure
 
-repositories:
-  # Offical CDH 7.1.9.0
-  - https://archive.cloudera.com/p/cdh7/7.1.9.0/parcels/
-cloudera_manager_version: 7.11.3
+infra_type: aws
 
-jdk_version: 11
-
-# SSH
-public_key_id: "{{ owner_prefix }}-{{ name_prefix }}"
-public_key_file: "{{ lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE') }}"
-public_key_text: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE')) }}"
-
-# Cloudera license
-license_file: "{{ lookup('ansible.builtin.env', 'CDP_LICENSE_FILE') }}"
-
-# Terraform settings
+# Terraform
 terraform:
   state:
     storage: local
@@ -28,53 +26,63 @@ terraform:
     s3_region: "{{ infra_region }}"
     s3_bucket: "{{ owner_prefix }}-{{ name_prefix }}-tf-state"
 
-# DNS
-dns_provider: "freeipa"
+# SSH
+public_key_id: "{{ owner_prefix }}-{{ name_prefix }}"
+public_key_file: "{{ lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE') }}"
+public_key_text: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE')) }}"
+
+### Cluster
+
+kerberos_activated: True
+encryption_activated: True
+# tls_activated: True
+# autotls: False
+
+jdk_version: 11
+
+repositories:
+  - https://archive.cloudera.com/p/cdh7/7.1.9.0/parcels/  # Offical CDH 7.1.9.0
 
 # Connect FreeIPA to Knox and Ranger
 freeipa_activated: yes
-# FreeIPA client install on cluster nodes is done during pre-setup
+
+# FreeIPA client install on cluster nodes is done during pre_setup, so suppress
 freeipa_enroll: no 
 
 # FreeIPA realm settings
 freeipa:
   realm: "{{ realm }}"
 
-#####
-
-# Vars from legacy cloudera-Deploy
-use_auto_repo_mirror: no
-use_default_cluster_definition: no
-use_download_mirror: no
-preload_cm_parcel_repo: yes
-teardown_everything: yes
-
 # Defer user and group creation to SSSD/FreeIPA registration
-#Use when you dont need ansible to run "ca_server"
+# Use when you dont need ansible to run "ca_server"
 skip_user_group_init: no
 
-# Cloudera Manager details
+### Cloudera Manager
 
+cloudera_manager_version: 7.11.3
+
+# General options
 cloudera_manager_options:
-  CUSTOM_BANNER_HTML: "PvC Base Lab ({{ name_prefix }})"
+  CUSTOM_BANNER_HTML: "PVC Base Lab ({{ name_prefix }})"
   SESSION_TIMEOUT: 43200
   PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND: 194560
   KRB_AUTH_ENABLE: "true"
 
+# Cloudera license
+license_file: "{{ lookup('ansible.builtin.env', 'CDP_LICENSE_FILE') }}"
+
 # License options (this is due to a hardcoded tmp directory on the target/manager node)
 license_local_tmp_path: /tmp/cloudera_license.txt
 
-###############
-###  RDBMS  ###
-###############
+###  RDBMS
+
 database_type: postgresql
 database_version: 12
 database_tls: true
 database_default_password: "{{ common_password }}"
 
-###############
+### Red Hat FreeIPA
 
-## Red Hat FreeIPA
 krb5_kdc_type: Red Hat IPA
 krb5_realm: "{{ realm }}"
 krb5_kdc_admin_user: "{{ freeipa.ipaadmin_user | default(lookup('env', 'IPA_USER', default='Undefined')) }}@{{ krb5_realm }}"
@@ -85,9 +93,7 @@ krb5_enc_types: "aes256-cts aes128-cts"
 #krb5_kdc_host: "{{ lookup('community.general.dig', '_ldap._tcp.' + domain +'./SRV', 'flat=0', wantlist=True, fail_on_error=True) | map(attribute='target') | first }}"
 krb5_kdc_host: "{{ groups['freeipa'] | first | default('') }}"
 
-############################################
-###  CM External Auth - FreeIPA as LDAP  ###
-############################################
+###  CM External Auth - FreeIPA as LDAP
 
 # Settings for FreeIPA sidecar deployment
 cloudera_manager_external_auth:
@@ -134,62 +140,9 @@ ca_server_attrs_root:
 ca_server_attrs_intermediate:
   CN: 'SE-Intermediate CA'
 
-# Infrastructure
-infra:
-  aws:
-    region: "{{ infra_region }}"
-    enable_dns: no
-    public_subnets: # TODO: Implement better selection of AZs
-      - az: "{{ infra_region }}a"
-    private_subnets:
-      - az: "{{ infra_region }}b"
-      - az: "{{ infra_region }}c"
-    default_security_group:
-      ingress:
-        - cidr: [ "0.0.0.0/0" ]
-          from: 22
-          to: 22
-          protocol: TCP
-          desc: SSH (Ansible)
-    nodes:
-      # Sidecar FreeIPA for Kerberos and DNS
-      - hostname_prefix: "freeipa"
-        count: 1
-        subnet_index: 0  # TODO: Implement better selection of AZs. this is the combined list of public + private
-        groups:
-          - freeipa
-          - jump_host
-          - nodes
-        instance_type: m5.large
-      # Manager, Master, DB, and CA 
-      - hostname_prefix: "base" # hostname will be of form {{ name_prefix }}-{{ hostname_prefix }}-<index of {{ count }}>
-        count: 1
-        groups: 
-          - cloudera_manager
-          - cluster_masters
-          - cluster
-          - nodes
-          - db_server
-          - linux_nodes
-          - deployment
-        host_template: Masters
-        instance_type: m5.4xlarge
-        root_volume:
-          volume_size: 250
-        subnet_index: 1
-        tls: True
-      # Cluster Worker
-      - hostname_prefix: worker
-        count: 2
-        groups: 
-          - cluster_workers
-          - cluster
-          - nodes
-          - linux_nodes
-          - deployment
-        instance_type: c5.2xlarge
-        subnet_index: 1
-        root_volume:
-          volume_size: 250
-        host_template: Workers
-        tls: True
+# Vars from legacy cloudera-Deploy
+use_auto_repo_mirror: no
+use_default_cluster_definition: no
+use_download_mirror: no
+preload_cm_parcel_repo: yes
+teardown_everything: yes

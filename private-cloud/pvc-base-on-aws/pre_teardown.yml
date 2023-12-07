@@ -1,24 +1,31 @@
+# Copyright 2023 Cloudera, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 ---
 
 - name: Deprovision the infrastructure resources
   hosts: localhost
   connection: local 
   gather_facts: no
-  tags:
-    - teardown
-    - provision
   tasks:
-    - name: Deprovision the infrastructure resources in the cloud provider
-      when: groups['all'] | length > 0
-      ansible.builtin.import_role:
-        name: cloudera.exe.provision
-      vars:
-        provision_state: absent
-        provision_provider: "{{ infra_type }}"
-        provision_inventory_file: inventory_static.ini
-        provision_directory: "tf_deployment_{{ name_prefix }}_{{ infra_type }}"
-        provision_state_storage: "{{ terraform.state.storage }}"
-        provision_remote_storage_s3_region: "{{ terraform.state.s3_region }}"
-        provision_remote_storage_s3_bucket: "{{ terraform.state.s3_bucket }}"
-        provision_create_remote_storage: "{{ terraform.state.create_remote_storage }}"
-        provision_name_prefix: "{{ name_prefix }}"
+    - name: Check for existing Terraform state file
+      ansible.builtin.stat:
+        path: tf_proxied_cluster/terraform.tfstate
+      register: __tf_state
+
+    - name: Teardown the demo infrastructure via Terraform
+      when: __tf_state.stat.exists
+      cloud.terraform.terraform:
+        project_path: "tf_proxied_cluster/"
+        state: "absent"
