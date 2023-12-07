@@ -30,16 +30,11 @@ ansible-navigator:
         ANSIBLE_DEPRECATION_WARNINGS: False
         ANSIBLE_HOST_KEY_CHECKING: False
         ANSIBLE_SSH_RETRIES: 10
-        ANSIBLE_COLLECTIONS_PATH: "/mnt/jenright/data/Cloudera/gitRepos/cloudera-labs/ansible_dev/collections:/usr/share/ansible/collections/"
-    # image: ghcr.io/cloudera-labs/cldr-runner:pvc-tmp-devel-collections
     image: ghcr.io/cloudera-labs/cldr-runner:aws-latest
     pull:
       arguments:
         - "--tls-verify=false"
     volume-mounts:
-      - src: "${ANSIBLE_COLLECTIONS_PATH}"
-        dest: "${ANSIBLE_COLLECTIONS_PATH}"
-        options: "Z"    
       - src: "${SSH_PUBLIC_KEY_FILE}"
         dest: "${SSH_PUBLIC_KEY_FILE}"
       - src: "${CDP_LICENSE_FILE}"
