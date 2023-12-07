@@ -36,8 +36,32 @@ provider "aws" {
 }
 
 locals {
+  # RedHat 8.6
+  ami_user   = "ec2-user"
+  ami_owners = ["309956199498"]
+  ami_filters = {
+    name         = ["RHEL-8.6*"]
+    architecture = ["x86_64"]
+  }
+  domain = var.domain != "" ? var.domain : "${var.prefix}.pvc-base.cldr.example"
   vpc_name = var.vpc_name != "" ? var.vpc_name : "${var.prefix}-pvc-base"
   igw_name = var.igw_name != "" ? var.igw_name : "${var.prefix}-pvc-base-igw"
+}
+
+# ------- AMI -------
+
+data "aws_ami" "pvc_base" {
+  owners      = local.ami_owners
+  most_recent = true
+
+  dynamic "filter" {
+    for_each = local.ami_filters
+
+    content {
+      name   = filter.key
+      values = filter.value
+    }
+  }
 }
 
 # ------- SSH -------
@@ -90,8 +114,8 @@ module "bastion" {
   source     = "../tf_bastion"
   depends_on = [aws_key_pair.pvc_base, module.cluster_network]
 
-  region       = var.region
   prefix       = var.prefix
+  image_id     = data.aws_ami.pvc_base.image_id
   vpc_id       = aws_vpc.pvc_base.id
   subnet_id    = module.cluster_network.public_subnets[0].id
   ssh_key_pair = aws_key_pair.pvc_base.key_name
@@ -130,22 +154,6 @@ resource "aws_vpc_security_group_egress_rule" "cluster" {
 }
 
 # ------- Cluster  -------
-
-# user = "ubuntu"
-data "aws_ami" "pvc_base" {
-  owners      = ["099720109477"] # Canonical
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-}
 
 module "masters" {
   source     = "../tf_hosts"
@@ -250,22 +258,22 @@ resource "ansible_group" "deployment" {
     ansible_group.freeipa.name
   ]
   variables = {
-    ansible_ssh_common_args = "-o ProxyCommand='ssh -o User=${module.bastion.user} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${module.bastion.host.public_ip}'"
+    ansible_ssh_common_args = "-o ProxyCommand='ssh -i {{ lookup('ansible.builtin.env', 'SSH_PRIVATE_KEY_FILE') }} -o User=${local.ami_user} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${module.bastion.host.public_ip}'"
   }
 }
 
-resource "ansible_group" "nodes" {
-  name = "nodes"
-  children = [
-    ansible_group.deployment.name,
-    ansible_group.bastion.name
-  ]
-}
+# resource "ansible_group" "nodes" {
+#   name = "nodes"
+#   children = [
+#     ansible_group.deployment.name,
+#     ansible_group.bastion.name
+#   ]
+# }
 
 resource "ansible_host" "masters" {
   for_each = { for idx, host in module.masters.hosts : idx => host }
 
-  name = each.value.tags["Name"]
+  name = format("%s.%s", each.value.tags["Name"], local.domain)
 
   groups = [
     ansible_group.masters.name,
@@ -275,14 +283,14 @@ resource "ansible_host" "masters" {
 
   variables = {
     ansible_host = each.value.private_ip
-    ansible_user = "ubuntu"
+    ansible_user = local.ami_user
   }
 }
 
 resource "ansible_host" "workers" {
   for_each = { for idx, host in module.workers.hosts : idx => host }
 
-  name = each.value.tags["Name"]
+  name = format("%s.%s", each.value.tags["Name"], local.domain)
 
   groups = [
     ansible_group.workers.name
@@ -290,14 +298,14 @@ resource "ansible_host" "workers" {
 
   variables = {
     ansible_host = each.value.private_ip
-    ansible_user = "ubuntu"
+    ansible_user = local.ami_user
   }
 }
 
 resource "ansible_host" "freeipa" {
   for_each = { for idx, host in module.freeipa.hosts : idx => host }
 
-  name = each.value.tags["Name"]
+  name = format("%s.%s", each.value.tags["Name"], local.domain)
 
   groups = [
     ansible_group.freeipa.name
@@ -305,12 +313,12 @@ resource "ansible_host" "freeipa" {
 
   variables = {
     ansible_host = each.value.private_ip
-    ansible_user = "ubuntu"
+    ansible_user = local.ami_user
   }
 }
 
 resource "ansible_host" "bastion" {
-  name = module.bastion.host.tags["Name"]
+  name = format("%s.%s", module.bastion.host.tags["Name"], local.domain)
 
   groups = [
     ansible_group.bastion.name
@@ -318,6 +326,6 @@ resource "ansible_host" "bastion" {
 
   variables = {
     ansible_host = module.bastion.host.public_ip
-    ansible_user = module.bastion.user
+    ansible_user = local.ami_user
   }
 }
