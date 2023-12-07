@@ -12,6 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+terraform {
+  required_version = ">= 0.13"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws",
+      version = ">= 4.60.0",
+    }
+  }
+}
+
 locals {
   instance_name = var.name != "" ? var.name : "${var.prefix}-pvc-base"
 }
@@ -19,7 +29,7 @@ locals {
 data "aws_ami" "pvc_base" {
   filter {
     name   = "image-id"
-    values = [ var.image_id ]
+    values = [var.image_id]
   }
 }
 

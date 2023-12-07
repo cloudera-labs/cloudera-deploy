@@ -59,7 +59,7 @@ variable "subnet_ids" {
 }
 
 variable "security_groups" {
-  type = list(string)
+  type        = list(string)
   description = "List of security group IDs to attach to the instances"
 }
 
