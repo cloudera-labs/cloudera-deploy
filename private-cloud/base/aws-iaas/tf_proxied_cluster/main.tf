@@ -43,7 +43,7 @@ locals {
     name         = ["RHEL-8.6*"]
     architecture = ["x86_64"]
   }
-  domain = var.domain != "" ? var.domain : "${var.prefix}.pvc-base.cldr.example"
+  domain   = var.domain != "" ? var.domain : "${var.prefix}.pvc-base.cldr.example"
   vpc_name = var.vpc_name != "" ? var.vpc_name : "${var.prefix}-pvc-base"
   igw_name = var.igw_name != "" ? var.igw_name : "${var.prefix}-pvc-base-igw"
 }

@@ -1,9 +1,0 @@
-{# Collect and output individual host variables #}
-{% macro host_variables(host) %}
-{% set fields = [] %}
-{% set _ = fields.append("ansible_user=" + host['ansible_user']) if 'ansible_user' in host %}
-{% set _ = fields.append("host_template=" + host['host_template']) if 'host_template' in host %}
-{% set _ = fields.append("label=" + host['label']) if 'label' in host %}
-{% set _ = fields.append("tls=" + host['tls'] | string) if 'tls' in host %}
-{{ host['inventory_hostname'] }} {{ fields | join(' ') }}
-{%- endmacro %}

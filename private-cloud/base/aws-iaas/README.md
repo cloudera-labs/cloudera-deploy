@@ -1,6 +1,6 @@
-# PvC Base Cluster on AWS
+# PvC Base Cluster on AWS IaaS
 
-> Constructs a CDP Private Cloud Base cluster running on AWS.
+> Constructs a CDP Private Cloud Base cluster running on AWS IaaS.
 
 ## Known Issues
 
@@ -20,7 +20,7 @@ To run, you need:
 
 ### Configuration Variables
 
-Configuration is passed via environment variables and an user-facing configuration file.
+Configuration is passed via environment variables and an user-managed configuration file.
 
 #### Environment Variables
 
