@@ -19,30 +19,19 @@ terraform {
       source  = "hashicorp/aws",
       version = ">= 4.60.0",
     }
-    ansible = {
-      source  = "ansible/ansible"
-      version = ">= 1.0.0"
-    }
   }
 }
 
-provider "aws" {
-  region = var.region
-  default_tags {
-    tags = var.asset_tags
-  }
+locals {
+  security_group_name = var.security_group_name != "" ? var.security_group_name : "${var.prefix}-pvc-base-bastion"
+  bastion_instance_name = var.bastion_instance_name != "" ? var.bastion_instance_name : "${var.prefix}-pvc-base-bastion"
 }
 
-data "local_file" "ssh_public_key_file" {
-  filename = var.ssh_public_key_file
+data "aws_key_pair" "bastion" {
+  key_name = var.ssh_key_pair
 }
 
-resource "aws_key_pair" "deployment" {
-  key_name   = "${var.prefix}-private-cloud-base-bastion"
-  public_key = data.local_file.ssh_public_key_file.content
-}
-
-data "aws_ami" "ubuntu" {
+data "aws_ami" "bastion" {
   most_recent = true
 
   filter {
@@ -59,7 +48,7 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_security_group" "bastion" {
-  name        = "${var.prefix}-private-cloud-base-bastion"
+  name        = local.security_group_name
   description = "Allow SSH traffic"
   vpc_id      = var.vpc_id
 }
@@ -83,25 +72,11 @@ resource "aws_vpc_security_group_ingress_rule" "bastion" {
 }
 
 resource "aws_instance" "bastion" {
-  ami           = data.aws_ami.ubuntu.id
+  ami           = data.aws_ami.bastion.id
   instance_type = "t2.micro"
-  key_name      = aws_key_pair.deployment.key_name
+  key_name      = data.aws_key_pair.bastion.key_name
   subnet_id     = var.subnet_id
-  vpc_security_group_ids = [
-    aws_security_group.bastion.id,
-  ]
-
+  vpc_security_group_ids = [ aws_security_group.bastion.id ]
   associate_public_ip_address = true
-
-  tags = {
-    Name = "${var.prefix}-private-cloud-base-bastion"
-  }
-}
-
-resource "ansible_host" "bastion" {
-  name   = aws_instance.bastion.public_dns
-  groups = ["bastion"]
-  variables = {
-    ansible_user = "ubuntu"
-  }
+  tags = { Name = local.bastion_instance_name }
 }
