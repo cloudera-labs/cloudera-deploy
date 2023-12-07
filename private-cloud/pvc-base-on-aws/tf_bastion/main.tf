@@ -24,7 +24,7 @@ terraform {
 
 locals {
   security_group_name = var.security_group_name != "" ? var.security_group_name : "${var.prefix}-pvc-base-bastion"
-  instance_name       = var.instance_name != "" ? var.instance_name : "${var.prefix}-pvc-base-bastion"
+  instance_name       = var.name != "" ? var.name : "${var.prefix}-pvc-base-bastion"
 }
 
 data "aws_key_pair" "bastion" {

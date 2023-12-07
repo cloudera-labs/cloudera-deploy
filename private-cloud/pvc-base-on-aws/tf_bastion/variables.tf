@@ -54,7 +54,7 @@ variable "image_id" {
   description = "AMI image ID for the bastion"
 }
 
-variable "instance_name" {
+variable "name" {
   type        = string
   description = "Name of the bastion instance"
   default     = ""

@@ -115,6 +115,7 @@ module "bastion" {
   depends_on = [aws_key_pair.pvc_base, module.cluster_network]
 
   prefix       = var.prefix
+  name         = "${var.prefix}-bastion"
   image_id     = data.aws_ami.pvc_base.image_id
   vpc_id       = aws_vpc.pvc_base.id
   subnet_id    = module.cluster_network.public_subnets[0].id
@@ -160,7 +161,7 @@ module "masters" {
   depends_on = [aws_key_pair.pvc_base, data.aws_ami.pvc_base]
 
   prefix          = var.prefix
-  name            = "${var.prefix}-pvc-base-master"
+  name            = "${var.prefix}-master"
   image_id        = data.aws_ami.pvc_base.image_id
   instance_type   = "m5.4xlarge"
   ssh_key_pair    = aws_key_pair.pvc_base.key_name
@@ -178,7 +179,7 @@ module "workers" {
   depends_on = [aws_key_pair.pvc_base, data.aws_ami.pvc_base]
 
   prefix          = var.prefix
-  name            = "${var.prefix}-pvc-base-worker"
+  name            = "${var.prefix}-worker"
   quantity        = 2
   image_id        = data.aws_ami.pvc_base.image_id
   instance_type   = "c5.2xlarge"
@@ -197,7 +198,7 @@ module "freeipa" {
   depends_on = [aws_key_pair.pvc_base, data.aws_ami.pvc_base]
 
   prefix          = var.prefix
-  name            = "${var.prefix}-pvc-base-freeipa"
+  name            = "${var.prefix}-freeipa"
   image_id        = data.aws_ami.pvc_base.image_id
   instance_type   = "m5.large" # TODO Look up via region
   ssh_key_pair    = aws_key_pair.pvc_base.key_name
