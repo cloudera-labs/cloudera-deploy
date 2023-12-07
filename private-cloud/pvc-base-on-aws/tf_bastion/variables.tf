@@ -49,13 +49,13 @@ variable "subnet_id" {
 }
 
 variable "security_group_name" {
-  type = string
+  type        = string
   description = "Name of the bastion security group"
-  default = ""
+  default     = ""
 }
 
 variable "bastion_instance_name" {
-  type = string
+  type        = string
   description = "Name of the bastion instance"
-  default = ""
+  default     = ""
 }

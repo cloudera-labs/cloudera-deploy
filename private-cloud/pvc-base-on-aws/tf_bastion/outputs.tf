@@ -12,15 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-output "instance" {
-  value = {
-    instance = aws_instance.bastion
-    user = "ubuntu"
-  }
+output "host" {
+  value = aws_instance.bastion
   description = "Bastion Instance"
 }
 
+output "user" {
+  value = "ubuntu"
+  description = "Bastion user"
+}
+
 output "security_group" {
-  value = aws_security_group.bastion
+  value       = aws_security_group.bastion
   description = "Bastion Security Group"
 }
