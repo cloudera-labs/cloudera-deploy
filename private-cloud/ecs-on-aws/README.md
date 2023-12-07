@@ -161,7 +161,10 @@ Once the cluster is up, you can access all of the UIs within, including the Free
 ssh -D <local port for your tunnel, e.g. 8157> -q -C -N <ami user>@<IP address of jump host>
 ```
 
-and use a SOCKS5 proxy switcher in your browser. You will get a SSL warning for the self-signed certificate; this is expected given this particular definition.
+and use a SOCKS5 proxy switcher in your browser (an example is the SwitchyOmega browser extension).
+In the SOCKS5 proxy configuration, set Protocol to SOCKS5; Server to localhost and Port to 8157. Ensure the SOCKS5 proxy is active when clicking on the CDP UI that you wish to access.
+
+You will get a SSL warning for the self-signed certificate; this is expected given this particular definition.
 
 In addition, you can log into the jump host via SSH and get to any of the servers within the cluster. Remember to forward your SSH key!
 
