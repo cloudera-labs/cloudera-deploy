@@ -29,38 +29,45 @@ Configuration is passed via environment variables and an user-facing configurati
     | Variable | Description | Status |
     |----------|-------------|--------|
     | `SSH_PUBLIC_KEY_FILE` | File path to the SSH public key that will be uploaded to the cloud provider (using the `name_prefix` variable as the key label). E.g. `/Users/example/.ssh/demo_ops.pub` | Mandatory |
-    | `SSH_PRIVATE_KEY_FILE` | | |
+    | `SSH_PRIVATE_KEY_FILE` | File path to the SSH private key. E.g. `/Users/example/.ssh/demo_ops` | Mandatory |
     | `CDP_LICENSE_FILE` | File path to a CDP Private Cloud Base license. E.g. `/Users/example/Documents/example_cloudera_license.txt` | Mandatory |
-    | `IPA_USER` | Set this to `admin`. The adminstrator user for FreeIPA.  | Mandatory |
-    | `IPA_PASSWORD` | The adminstrator and directory password for FreeIPA | Mandatory |
     | `AWS_PROFILE` | The profile label for your AWS credentials. Otherwise, use the associated `AWS_*` parameters. | Mandatory |
 
 #### Configuration file variables
 
 Copy `config-template.yml` to `config.yml` and edit this user-facing configuration file to match your particular deployment.
 
-*NOTE:* `name_prefix` should be 4-7 characters and is the "primary key" for the deployment. `owner_prefix` is used in circumstances to differentiate resources such as the SSH key label in the cloud provider and the subdomain(s) for the private DNS service.
+> [!IMPORTANT]
+> `name_prefix` should be 4-7 characters and is the "primary key" for the deployment.
 
 ```yaml
-name_prefix:       "labaw"                             # CHANGE THIS
-owner_prefix:      "pvc-base"                        
-owner_email:       "example@cloudera.com"            
-infra_region:      "eu-west-1"                      
-infra_type:        "aws"                               # "aws", "static"
-domain:            "{{ owner_prefix }}.cldr.example"   # The private, adhoc subdomain (name_prefix.owner_prefix.cldr.demo)
-realm:             "CLDR.EXAMPLE"                      # The Kerberos realm
-common_password:   "Example776"                   
-admin_password:    "Example776"                   
+name_prefix:       "{{ mandatory }}"                # Unique identifier for the deployment                 
+infra_region:      "us-east-2"
+domain:            "{{ name_prefix }}.cldr.example" # The deployment subdomain
+realm:             "CLDR.DEPLOYMENT"                # The Kerberos realm
+common_password:   "Example776"                     # For external services
+admin_password:    "Example776"                     # For Cloudera-related services
 deployment_tags:
-  owner: "{{ owner_prefix }}"
-  email: "{{ owner_email }}"
-  project: "PvC Base Lab - {{ owner_prefix }}-{{ name_prefix }}"
-  enddate: "{{ ('%m%d%Y' | strftime((ansible_date_time.epoch | int) + (90 * 86400))) }}"
-  deployment: "{{ name_prefix }}"
-  deploy-tool: cloudera-deploy
+  deployment:   "{{ name_prefix }}"
+  deploy-tool:  cloudera-deploy
 ```
 
 ## Execution
+
+## All-in-One
+
+You can run all of the following steps at once, if you wish:
+
+```bash
+ansible-navigator run \
+    pre_setup.yml \
+    external_setup.yml \
+    internal_setup.yml \
+    base_setup.yml \
+    summary.yml \
+    -e @definition.yml \
+    -e @config.yml
+```
 
 ### Pre-setup Playbook
 
@@ -115,10 +122,9 @@ ansible-navigator run base_setup.yml \
     -e @config.yml
 ```
 
-And lastly, the _postfix_:
-
 ```bash
-ansible-navigator run base_postfix.yml \
+# Produce a deployment summary and retrieve the FreeIPA CA certificate
+ansible-navigator run summary.yml \
     -e @definition.yml \
     -e @config.yml
 ```
@@ -135,8 +141,8 @@ Use a SOCKS5 proxy switcher in your browser (an example is the SwitchyOmega brow
 
 In the SOCKS5 proxy configuration, set _Protocol_ to `SOCKS5`, _Server_ to `localhost`, and _Port_ to `8157`. Ensure the SOCKS5 proxy is active when clicking on the CDP UI that you wish to access.
 
-> **NOTE:**
-> You will get a SSL warning for the self-signed certificate; this is expected given this particular definition as the local FreeIPA server has the root certificate. (You can always install this root certificate if you want to remove this notification!)
+> [!CAUTION]
+> You will get a SSL warning for the self-signed certificate; this is expected given this particular definition as the local FreeIPA server has no upstream certificates. However, you can install this CA certificate to remove this notification.
 
 In addition, you can log into the jump host via SSH and get to any of the servers within the cluster. Remember to forward your SSH key!
 
@@ -144,7 +150,7 @@ In addition, you can log into the jump host via SSH and get to any of the server
 ssh -A -C -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ec2-user@<IP address of jump host>
 ```
 
-> **NOTE:**
+> [!NOTE]
 > The above assume you are using the default AMI image set in the Terraform configuration. If not, adjust the SSH user appropriately.
 
 ## Teardown
