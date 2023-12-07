@@ -24,10 +24,10 @@ terraform:
     storage: local
     create_remote_storage: False
     s3_region: "{{ infra_region }}"
-    s3_bucket: "{{ owner_prefix }}-{{ name_prefix }}-tf-state"
+    s3_bucket: "{{ name_prefix }}-tf-state"
 
 # SSH
-public_key_id: "{{ owner_prefix }}-{{ name_prefix }}"
+public_key_id: "{{ name_prefix }}-pvc-base"
 public_key_file: "{{ lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE') }}"
 public_key_text: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE')) }}"
 
@@ -52,6 +52,8 @@ freeipa_enroll: no
 # FreeIPA realm settings
 freeipa:
   realm: "{{ realm }}"
+  ipaadmin_user: admin
+  ipaadmin_password: "{{ common_password }}"
 
 # Defer user and group creation to SSSD/FreeIPA registration
 # Use when you dont need ansible to run "ca_server"
@@ -84,9 +86,9 @@ database_default_password: "{{ common_password }}"
 ### Red Hat FreeIPA
 
 krb5_kdc_type: Red Hat IPA
-krb5_realm: "{{ realm }}"
-krb5_kdc_admin_user: "{{ freeipa.ipaadmin_user | default(lookup('env', 'IPA_USER', default='Undefined')) }}@{{ krb5_realm }}"
-krb5_kdc_admin_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}"
+krb5_realm: "{{ freeipa.realm }}"
+krb5_kdc_admin_user: "{{ freeipa.ipaadmin_user }}@{{ krb5_realm }}"
+krb5_kdc_admin_password: "{{ freeipa.ipaadmin_password }}"
 krb5_enc_types: "aes256-cts aes128-cts"
 # TODO: This needs to either be explicit or rendered from a host with DNS resolution
 # Cannot rely on localhost to have DNS access, e.g. private networking on EC2
@@ -103,7 +105,7 @@ cloudera_manager_external_auth:
 
 auth_provider: "{{ auth_providers[cloudera_manager_external_auth.provider] }}"
 
-base_dn: "dc={{ (krb5_realm | lower).split('.') | join(',dc=') }}"
+base_dn: "dc={{ freeipa.realm.split('.') | map('lower') | join(',dc=') }}"
 user_dn: "cn=users,cn=accounts,{{ base_dn }}"
 group_dn: "cn=groups,cn=accounts,{{ base_dn }}"
 
@@ -112,16 +114,20 @@ auth_providers:
     ldap_url: "ldaps://{{ groups['freeipa'] | first | default('') }}:636"
     ldap_base_dn: "{{ base_dn }}"
     ldap_bind_user_dn: "uid=admin,{{ user_dn }}"
-    ldap_bind_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}"
+    ldap_bind_password: "{{ freeipa.ipaadmin_password }}"
     ldap_search_base:
       user: "{{ user_dn }}"
       group: "{{ group_dn }}"
     ldap_object_class:
       user: "person"
-      group: "groupofnames"
+      group: "posixgroup"
     ldap_search_filter:
-     user: uid={0}
-     member: (member={0})    
+      user: uid
+      member: member
+      # group: (&(member={0})(objectclass=posixgroup)(!(cn=admins)))
+    ldap_attribute:
+     user: uid # Set to (uid={0})
+     member: member # defaults to (member={0})
     ldap_attr_user_name: "uid"
     ldap_attr_group_name: "cn"
     ldap_attr_group_membership: "member"

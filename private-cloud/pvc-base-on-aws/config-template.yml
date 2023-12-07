@@ -14,17 +14,12 @@
 
 ---
 
-name_prefix:       "pvclab"                           # CHANGE THIS
-owner_prefix:      "pvc-base"                        
-owner_email:       "example@cloudera.com"            
-infra_region:      "us-east-2"                      
-domain:            "{{ name_prefix }}.cldr.example"   # The private, adhoc subdomain managed by the local FreeIPA server
-realm:             "CLDR.EXAMPLE"                     # The Kerberos realm managed by the local FreeIPA server
-common_password:   "Example776"                       # For external services, e.g. Postgres, TLS
-admin_password:    "Example776"                       # For CM-related services
+name_prefix:       "{{ mandatory }}"                # Unique identifier for the deployment                 
+infra_region:      "us-east-2"
+domain:            "{{ name_prefix }}.cldr.example" # The deployment subdomain (private) managed by the local FreeIPA server
+realm:             "CLDR.DEPLOYMENT"                # The Kerberos realm managed by the local FreeIPA server
+common_password:   "Example776"                     # For external services, e.g. FreeIPA, Postgres, TLS
+admin_password:    "Example776"                     # For Cloudera-related services, e.g. Cloudera Manager
 deployment_tags:
-  owner: "{{ owner_prefix }}"
-  email: "{{ owner_email }}"
-  project: "PVC Base - {{ owner_prefix }}-{{ name_prefix }}"
-  deployment: "{{ name_prefix }}"
-  deploy-tool: cloudera-deploy
+  deployment:   "{{ name_prefix }}"
+  deploy-tool:  cloudera-deploy

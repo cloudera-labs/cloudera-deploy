@@ -40,8 +40,8 @@ ansible-navigator:
         - SSH_PUBLIC_KEY_FILE
         - SSH_PRIVATE_KEY_FILE
         - CDP_LICENSE_FILE
-        - IPA_USER
-        - IPA_PASSWORD        
+        #- IPA_USER
+        #- IPA_PASSWORD        
       set:
         ANSIBLE_SSH_CONTROL_PATH: "/dev/shm/cp%%h-%%p-%%r"
         ANSIBLE_CALLBACK_WHITELIST: "ansible.posix.profile_tasks"
