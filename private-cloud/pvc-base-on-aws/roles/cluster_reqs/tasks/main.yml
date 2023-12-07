@@ -29,23 +29,36 @@
     - "{{ ansible_facts['os_family'] }}.yml"
     - "default.yml"
 
-- name: Run distribution tasks
+- name: Run distribution pre-tasks
   ansible.builtin.include_tasks: "{{ item }}"
   with_first_found:
-    - "{{ ansible_facts['distribution'] }}-{{ ansible_facts['distribution_version'] }}.yml"
-    - "{{ ansible_facts['distribution'] }}-{{ ansible_facts['distribution_major_version'] }}.yml"
-    - "{{ ansible_facts['distribution'] }}.yml"
-    - "{{ ansible_facts['os_family'] }}-{{ ansible_facts['distribution_version'] }}.yml"
-    - "{{ ansible_facts['os_family'] }}-{{ ansible_facts['distribution_major_version'] }}.yml"
-    - "{{ ansible_facts['os_family'] }}.yml"
+    - "{{ ansible_facts['distribution'] }}-{{ ansible_facts['distribution_version'] }}-pre.yml"
+    - "{{ ansible_facts['distribution'] }}-{{ ansible_facts['distribution_major_version'] }}-pre.yml"
+    - "{{ ansible_facts['distribution'] }}-pre.yml"
+    - "{{ ansible_facts['os_family'] }}-{{ ansible_facts['distribution_version'] }}-pre.yml"
+    - "{{ ansible_facts['os_family'] }}-{{ ansible_facts['distribution_major_version'] }}-pre.yml"
+    - "{{ ansible_facts['os_family'] }}-pre.yml"
     - "default.yml"
 
 - name: Install required system packages
+  when: system_packages
   ansible.builtin.package:
     name: "{{ system_packages }}"
     state: present
 
 - name: Install required Python libraries
+  when: python_libraries
   ansible.builtin.pip:
     name: "{{ python_libraries }}"
     state: present
+
+- name: Run distribution post-tasks
+  ansible.builtin.include_tasks: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_facts['distribution'] }}-{{ ansible_facts['distribution_version'] }}-post.yml"
+    - "{{ ansible_facts['distribution'] }}-{{ ansible_facts['distribution_major_version'] }}-post.yml"
+    - "{{ ansible_facts['distribution'] }}-post.yml"
+    - "{{ ansible_facts['os_family'] }}-{{ ansible_facts['distribution_version'] }}-post.yml"
+    - "{{ ansible_facts['os_family'] }}-{{ ansible_facts['distribution_major_version'] }}-post.yml"
+    - "{{ ansible_facts['os_family'] }}-post.yml"
+    - "default.yml"

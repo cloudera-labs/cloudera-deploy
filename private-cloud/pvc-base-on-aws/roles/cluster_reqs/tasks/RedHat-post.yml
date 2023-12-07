@@ -12,16 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-system_packages:
-  - tree 
-  - jq 
-  - zip
-  #- postgresql-devel
-  #- gcc
-  #- platform-python-devel
-  - python38
-
-python_libraries: []  
-
-python38_libraries:
-  - psycopg2-binary==2.9.5
+- name: Install required Python38 libraries
+  ansible.builtin.pip:
+    name: "{{ python38_libraries }}"
+    state: present
+    executable: pip3.8
