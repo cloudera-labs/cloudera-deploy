@@ -131,6 +131,7 @@ resource "aws_vpc_security_group_egress_rule" "cluster" {
 
 # ------- Cluster  -------
 
+# user = "ubuntu"
 data "aws_ami" "pvc_base" {
   owners      = ["099720109477"] # Canonical
   most_recent = true
@@ -150,37 +151,173 @@ module "masters" {
   source     = "../tf_hosts"
   depends_on = [aws_key_pair.pvc_base, data.aws_ami.pvc_base]
 
-  prefix          = "${var.prefix}-proxied-cluster-master"
+  prefix          = var.prefix
+  name            = "${var.prefix}-pvc-base-master"
   image_id        = data.aws_ami.pvc_base.image_id
+  instance_type   = "m5.4xlarge"
   ssh_key_pair    = aws_key_pair.pvc_base.key_name
   subnet_ids      = module.cluster_network.private_subnets[*].id
   security_groups = [module.cluster_network.intra_cluster_security_group.id]
   public_ip       = false
+
+  root_volume = {
+    volume_size = 250
+  }
 }
 
 module "workers" {
   source     = "../tf_hosts"
   depends_on = [aws_key_pair.pvc_base, data.aws_ami.pvc_base]
 
-  prefix          = "${var.prefix}-proxied-cluster-worker"
-  quantity        = 4
+  prefix          = var.prefix
+  name            = "${var.prefix}-pvc-base-worker"
+  quantity        = 2
   image_id        = data.aws_ami.pvc_base.image_id
+  instance_type   = "c5.2xlarge"
+  ssh_key_pair    = aws_key_pair.pvc_base.key_name
+  subnet_ids      = module.cluster_network.private_subnets[*].id
+  security_groups = [module.cluster_network.intra_cluster_security_group.id]
+  public_ip       = false
+
+  root_volume = {
+    volume_size = 250
+  }
+}
+
+module "freeipa" {
+  source     = "../tf_hosts"
+  depends_on = [aws_key_pair.pvc_base, data.aws_ami.pvc_base]
+
+  prefix          = var.prefix
+  name            = "${var.prefix}-pvc-base-freeipa"
+  image_id        = data.aws_ami.pvc_base.image_id
+  instance_type   = "m5.large" # TODO Look up via region
   ssh_key_pair    = aws_key_pair.pvc_base.key_name
   subnet_ids      = module.cluster_network.private_subnets[*].id
   security_groups = [module.cluster_network.intra_cluster_security_group.id]
   public_ip       = false
 }
 
-module "moar_workers" {
-  source     = "../tf_hosts"
-  depends_on = [aws_key_pair.pvc_base, data.aws_ami.pvc_base]
+# ------- Ansible Inventory  -------
 
-  prefix          = "${var.prefix}-proxied-cluster-worker"
-  quantity        = 4
-  offset          = 4
-  image_id        = data.aws_ami.pvc_base.image_id
-  ssh_key_pair    = aws_key_pair.pvc_base.key_name
-  subnet_ids      = module.cluster_network.private_subnets[*].id
-  security_groups = [module.cluster_network.intra_cluster_security_group.id]
-  public_ip       = false
+resource "ansible_group" "bastion" {
+  name = "jump_host"
+}
+
+resource "ansible_group" "freeipa" {
+  name = "freeipa"
+}
+
+resource "ansible_group" "db" {
+  name = "db_server"
+}
+
+resource "ansible_group" "cm" {
+  name = "cloudera_manager"
+}
+
+resource "ansible_group" "workers" {
+  name = "cluster_workers"
+  variables = {
+    host_template = "Workers"
+  }
+}
+
+resource "ansible_group" "masters" {
+  name = "cluster_masters"
+  variables = {
+    host_template = "Masters"
+  }
+}
+
+resource "ansible_group" "cluster" {
+  name = "cluster"
+  children = [
+    ansible_group.masters.name,
+    ansible_group.workers.name
+  ]
+  variables = {
+    tls = "True"
+  }
+}
+
+resource "ansible_group" "deployment" {
+  name = "deployment"
+  children = [
+    ansible_group.cluster.name,
+    ansible_group.cm.name,
+    ansible_group.db.name,
+    ansible_group.freeipa.name
+  ]
+  variables = {
+    ansible_ssh_common_args = "-o ProxyCommand='ssh -o User=${module.bastion.user} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -q ${module.bastion.host.public_ip}'"
+  }
+}
+
+resource "ansible_group" "nodes" {
+  name = "nodes"
+  children = [
+    ansible_group.deployment.name,
+    ansible_group.bastion.name
+  ]
+}
+
+resource "ansible_host" "masters" {
+  for_each = { for idx, host in module.masters.hosts : idx => host }
+
+  name = each.value.tags["Name"]
+
+  groups = [
+    ansible_group.masters.name,
+    ansible_group.cm.name,
+    ansible_group.db.name
+  ]
+
+  variables = {
+    ansible_host = each.value.private_ip
+    ansible_user = "ubuntu"
+  }
+}
+
+resource "ansible_host" "workers" {
+  for_each = { for idx, host in module.workers.hosts : idx => host }
+
+  name = each.value.tags["Name"]
+
+  groups = [
+    ansible_group.workers.name
+  ]
+
+  variables = {
+    ansible_host = each.value.private_ip
+    ansible_user = "ubuntu"
+  }
+}
+
+resource "ansible_host" "freeipa" {
+  for_each = { for idx, host in module.freeipa.hosts : idx => host }
+
+  name = each.value.tags["Name"]
+
+  groups = [
+    ansible_group.freeipa.name
+  ]
+
+  variables = {
+    ansible_host = each.value.private_ip
+    ansible_user = "ubuntu"
+  }
+}
+
+resource "ansible_host" "bastion" {
+  name = module.bastion.host.tags["Name"]
+
+  groups = [
+    ansible_group.bastion.name
+  ]
+
+  variables = {
+    ansible_host = module.bastion.host.public_ip
+    ansible_user = module.bastion.user
+  }
 }

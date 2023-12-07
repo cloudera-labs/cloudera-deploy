@@ -131,7 +131,7 @@ resource "aws_route_table" "pvc_base_private" {
   vpc_id = data.aws_vpc.pvc_base.id
 
   tags = { Name = format("%s-%02d", local.rt_private_name, index(local.private_subnets, each.value) + 1) }
- 
+
   route {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.pvc_base[(index(local.private_subnets, each.value) % length(aws_nat_gateway.pvc_base))].id

@@ -36,7 +36,7 @@ output "cluster" {
 
 output "bastion" {
   value = {
-    instance       = module.bastion.instance
+    host           = module.bastion.host
     security_group = module.bastion.security_group
   }
   description = "Bastion host"
