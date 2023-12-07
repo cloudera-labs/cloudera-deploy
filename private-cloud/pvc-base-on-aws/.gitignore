@@ -13,5 +13,11 @@ tf_deployment*
 *.tfstate
 *.tfstate.*
 
+# .lock files
+*.terraform.lock.hcl
+
+# .tfvars files
+*.tfvars
+
 # Static inventory files
 inventory_static*
