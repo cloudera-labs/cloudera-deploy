@@ -19,23 +19,23 @@ data "aws_availability_zones" "pvc_base" {
 }
 
 locals {
-  vpc_name = var.vpc_name != "" ? var.vpc_name : "${var.prefix}-pvc-base"
-  igw_name = var.igw_name != "" ? var.igw_name : "${var.prefix}-pvc-base-igw"
-  nat_name = var.nat_gateway_name != "" ? var.nat_gateway_name : "${var.prefix}-pvc-base-nat"
-  rt_public_name = var.public_route_table_name != "" ? var.public_route_table_name : "${var.prefix}-pvc-base-public"
-  rt_private_name = var.private_route_table_name != "" ? var.private_route_table_name : "${var.prefix}-pvc-base-private"
+  vpc_name           = var.vpc_name != "" ? var.vpc_name : "${var.prefix}-pvc-base"
+  igw_name           = var.igw_name != "" ? var.igw_name : "${var.prefix}-pvc-base-igw"
+  nat_name           = var.nat_gateway_name != "" ? var.nat_gateway_name : "${var.prefix}-pvc-base-nat"
+  rt_public_name     = var.public_route_table_name != "" ? var.public_route_table_name : "${var.prefix}-pvc-base-public"
+  rt_private_name    = var.private_route_table_name != "" ? var.private_route_table_name : "${var.prefix}-pvc-base-private"
   public_subnet_name = var.public_subnet_name != "" ? var.public_subnet_name : "${var.prefix}-pvc-base-public"
   public_subnets = length(var.public_subnets) > 0 ? var.public_subnets : tolist([{
     name = "${local.public_subnet_name}-01",
     cidr = cidrsubnet(var.vpc_cidr, 8, 0),
-    az = data.aws_availability_zones.pvc_base.names[0],
+    az   = data.aws_availability_zones.pvc_base.names[0],
     tags = {}
   }])
   private_subnet_name = var.private_subnet_name != "" ? var.private_subnet_name : "${var.prefix}-pvc-base-private"
   private_subnets = length(var.private_subnets) > 0 ? var.private_subnets : tolist([{
     name = "${local.private_subnet_name}-01",
     cidr = cidrsubnet(var.vpc_cidr, 8, 1),
-    az = data.aws_availability_zones.pvc_base.names[0],
+    az   = data.aws_availability_zones.pvc_base.names[0],
     tags = {}
   }])
   sg_intra_name = var.security_group_intra_name != "" ? var.security_group_intra_name : "${var.prefix}-pvc-base-intra"
@@ -105,12 +105,12 @@ resource "aws_eip" "pvc_base" {
 }
 
 resource "aws_nat_gateway" "pvc_base" {
-  for_each          = { for idx, subnet in aws_subnet.pvc_base_public : idx => subnet }
+  for_each = { for idx, subnet in aws_subnet.pvc_base_public : idx => subnet }
 
   subnet_id         = each.value.id
   allocation_id     = aws_eip.pvc_base[each.key].id
   connectivity_type = "public"
-  tags = { Name = format("%s-%02d", local.nat_name, each.key + 1) }
+  tags              = { Name = format("%s-%02d", local.nat_name, each.key + 1) }
 }
 
 # Private Subnets
@@ -133,7 +133,7 @@ resource "aws_route_table" "pvc_base_private" {
   tags = { Name = format("%s-%02d", local.rt_private_name, index(local.private_subnets, each.value)) }
 
   route {
-    cidr_block = "0.0.0.0/0"
+    cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.pvc_base[(index(local.private_subnets, each.value) % length(aws_nat_gateway.pvc_base))].id
   }
 }
@@ -152,38 +152,26 @@ resource "aws_route_table_association" "pvc_base_private" {
 resource "aws_security_group" "pvc_base" {
   vpc_id      = aws_vpc.pvc_base.id
   name        = local.sg_intra_name
-  description = "Intra-cluster communication for PVC cluster '${var.prefix}'"
+  description = "Intra-cluster communication [${var.prefix}]"
+  tags        = { Name = local.sg_intra_name }
+}
 
-  tags = { Name = local.sg_intra_name }
+resource "aws_security_group_rule" "pvc_base_self_ingress" {
+  security_group_id = aws_security_group.pvc_base.id
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  description       = "Self-reference ingress rule"
+  protocol          = "all"
+  self              = true
+}
 
-  # Create self reference ingress rule to allow 
-  # communication among resources in the security group.
-  ingress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "all"
-    self      = true
-  }
-
-  # TODO Ingress should be defined by tf_proxied_cluster or other root module
-  # # Dynamic Block to create security group rule from var.sg_ingress
-  # dynamic "ingress" {
-  #   for_each = var.security_group_rules_ingress
-
-  #   content {
-  #     cidr_blocks = ingress.value.cidr
-  #     from_port   = ingress.value.from_port
-  #     to_port     = ingress.value.to_port
-  #     protocol    = ingress.value.protocol
-  #   }
-
-  # }
-
-  # Terraform removes the default ALLOW ALL egress. Let's recreate this
-  egress {
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 0
-    to_port     = 0
-    protocol    = "all"
-  }
+resource "aws_security_group_rule" "pvc_base_self_egress" {
+  security_group_id = aws_security_group.pvc_base.id
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  description       = "Self-reference egress rule"
+  protocol          = "all"
+  self              = true
 }

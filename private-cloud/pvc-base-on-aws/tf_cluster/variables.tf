@@ -31,20 +31,20 @@ variable "region" {
 variable "vpc_name" {
   type        = string
   description = "VPC name"
-  default = ""
+  default     = ""
 }
 
 # TODO Convert to list of CIDR blocks
 variable "vpc_cidr" {
   type        = string
   description = "VPC CIDR Block"
-  default = "10.10.0.0/16"
+  default     = "10.10.0.0/16"
 }
 
 variable "igw_name" {
   type        = string
   description = "Internet Gateway name"
-  default = ""
+  default     = ""
 }
 
 # Public Network infrastructure
@@ -55,15 +55,15 @@ variable "public_subnet_name" {
 }
 
 variable "public_subnets" {
-  type       = list(object({
-    name     = string
-    cidr     = string
-    az       = string
-    tags     = map(string)
+  type = list(object({
+    name = string
+    cidr = string
+    az   = string
+    tags = map(string)
   }))
-  
+
   description = "List of Public Subnet details (name, CIDR, AZ, add'l tags)"
-  default    = []
+  default     = []
 }
 
 variable "public_route_table_name" {
@@ -80,37 +80,37 @@ variable "private_subnet_name" {
 }
 
 variable "private_subnets" {
-  type       = list(object({
-    name     = string
-    cidr     = string
-    az       = string
-    tags     = map(string)
+  type = list(object({
+    name = string
+    cidr = string
+    az   = string
+    tags = map(string)
   }))
 
   description = "List of Private Subnet details (name, CIDR, AZ, add'l tags)"
-  default    = []
+  default     = []
 }
 
 variable "nat_gateway_name" {
-  type        = string
-  
+  type = string
+
   description = "NAT gateway name"
   default     = ""
 }
 
 variable "private_route_table_name" {
-  type        = string
-  
+  type = string
+
   description = "Private Route Table name prefix"
   default     = ""
 }
 
 # Security Groups
 variable "security_group_intra_name" {
-  type        = string
-  
+  type = string
+
   description = "Security Group for intra-cluster communication"
-  default = ""
+  default     = ""
 }
 
 # variable "security_group_intra_ingress" {
@@ -120,7 +120,7 @@ variable "security_group_intra_name" {
 #     to_port    = string
 #     protocol   = string
 #   }))
-  
+
 #   description = "Ingress rule details for intra-cluster Security Group"
 #   default    = []
 # }
