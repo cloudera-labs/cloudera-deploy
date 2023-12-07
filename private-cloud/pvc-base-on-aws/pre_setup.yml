@@ -105,7 +105,7 @@
         allow_sync_ptr: yes
         forward_policy: none
 
-    - name: Create reverse DNS zone for '{{ vpc_cidr }}'
+    - name: Create reverse DNS zone for '{{ vpc_cidr }}' in provisioned FreeIPA service
       freeipa.ansible_freeipa.ipadnszone:
         name_from_ip: "{{ vpc_cidr }}"
         dynamic_update: yes

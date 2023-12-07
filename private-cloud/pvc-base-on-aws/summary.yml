@@ -1,5 +1,5 @@
 # Copyright 2023 Cloudera, Inc.
-#  
+# 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,33 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Ansible Navigator assets
-ansible-navigator.log
-runs
-context
+- name: Create a deployment summary document
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Create the deployment summary document
+      ansible.builtin.template:
+        src: "deployment.md.j2"
+        dest: "{{ name_prefix | upper }}-DEPLOYMENT.md"
 
-# Terraform deployments
-tf_deployment*
-
-# Local .terraform directories
-**/.terraform/*
-
-# .tfstate files
-*.tfstate
-*.tfstate.*
-
-# .lock files
-*.terraform.lock.hcl
-
-# .tfvars files
-*.tfvars
-
-# Static inventory files
-inventory_static*
-
-# Per-user configuration files
-config.yml
-
-# Per-deployment artifacts
-*-DEPLOYMENT.md
-*.ca.crt
+- name: Retrieve the FreeIPA CA certificate
+  hosts: freeipa
+  gather_facts: no
+  tasks:
+    - name: Retrieve the CA certificate
+      ansible.builtin.fetch:
+        src: "/etc/ipa/ca.crt"
+        dest: "{{ inventory_hostname }}.ca.crt"
+        flat: yes
+      run_once: yes

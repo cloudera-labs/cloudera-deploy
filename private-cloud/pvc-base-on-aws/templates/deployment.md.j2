@@ -1,0 +1,41 @@
+# {{ name_prefix}} - PVC Base Deployment
+
+* **Prefix:** {{ name_prefix }}
+* **Domain:** {{ domain }}
+* **Realm:** {{ realm }}
+* **SSH:** {{ lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE') | basename }}
+
+## Deployment Access
+
+Enable the SSH tunnel to the deployment:
+
+```bash
+ssh -D 8157 -qCN {{ groups['jump_host'] | map('extract', hostvars, 'ansible_user') | first }}@{{ groups['jump_host'] | map('extract', hostvars, 'ansible_host') | first }}
+```
+
+Use a SOCKS5 proxy switcher in your browser to access the deployment endpoints. 
+(An example is the _SwitchyOmega_ extension for Chrome-based browsers.)
+
+In the proxy configuration, set _Protocol_ to `SOCKS5`, _Server_ to 
+`localhost`, and _Port_ to `8157`. Ensure the SOCKS5 proxy is active when 
+clicking on the CDP Private Cloud Base UIs and endpoints that you wish to access.
+
+## SSL Certificate Installation
+
+Any SSL-enabled endpoint within the cluster will produce a SSL warning for the
+self-signed certificate issued by the deployment's local FreeIPA server.  If you
+wish to avoid this warning, install the CA certificate, `{{ groups['freeipa'] | first }}.ca.crt`,
+for your browser and/or system.
+
+## Endpoints
+
+* [Cloudera Manager](https://{{ groups['cloudera_manager'] | first }}:7183)
+* [FreeIPA](https://{{ groups['freeipa'] | first }})
+
+## Hosts
+
+|Host|FQDN|
+|---|---|
+{% for host in groups['all'] | sort | map('extract', hostvars) | list %}
+| {{ host['inventory_hostname_short'] }} | {{ host['inventory_hostname'] }} |
+{% endfor %}
