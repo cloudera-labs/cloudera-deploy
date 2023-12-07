@@ -33,11 +33,6 @@ variable "prefix" {
   }
 }
 
-variable "region" {
-  type        = string
-  description = "Region"
-}
-
 variable "vpc_id" {
   type        = string
   description = "VPC ID"
@@ -54,7 +49,12 @@ variable "security_group_name" {
   default     = ""
 }
 
-variable "bastion_instance_name" {
+variable "image_id" {
+  type        = string
+  description = "AMI image ID for the bastion"
+}
+
+variable "instance_name" {
   type        = string
   description = "Name of the bastion instance"
   default     = ""

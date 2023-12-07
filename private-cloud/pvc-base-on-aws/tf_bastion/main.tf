@@ -23,28 +23,12 @@ terraform {
 }
 
 locals {
-  security_group_name   = var.security_group_name != "" ? var.security_group_name : "${var.prefix}-pvc-base-bastion"
-  bastion_instance_name = var.bastion_instance_name != "" ? var.bastion_instance_name : "${var.prefix}-pvc-base-bastion"
+  security_group_name = var.security_group_name != "" ? var.security_group_name : "${var.prefix}-pvc-base-bastion"
+  instance_name       = var.instance_name != "" ? var.instance_name : "${var.prefix}-pvc-base-bastion"
 }
 
 data "aws_key_pair" "bastion" {
   key_name = var.ssh_key_pair
-}
-
-data "aws_ami" "bastion" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  owners = ["099720109477"] # Canonical
 }
 
 resource "aws_security_group" "bastion" {
@@ -72,11 +56,11 @@ resource "aws_vpc_security_group_ingress_rule" "bastion" {
 }
 
 resource "aws_instance" "bastion" {
-  ami                         = data.aws_ami.bastion.id
+  ami                         = var.image_id
   instance_type               = "t2.micro"
   key_name                    = data.aws_key_pair.bastion.key_name
   subnet_id                   = var.subnet_id
   vpc_security_group_ids      = [aws_security_group.bastion.id]
   associate_public_ip_address = true
-  tags                        = { Name = local.bastion_instance_name }
+  tags                        = { Name = local.instance_name }
 }

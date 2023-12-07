@@ -13,13 +13,8 @@
 # limitations under the License.
 
 output "host" {
-  value = aws_instance.bastion
-  description = "Bastion Instance"
-}
-
-output "user" {
-  value = "ubuntu"
-  description = "Bastion user"
+  value       = aws_instance.bastion
+  description = "Bastion host"
 }
 
 output "security_group" {
