@@ -21,3 +21,6 @@ tf_deployment*
 
 # Static inventory files
 inventory_static*
+
+# Per-user configuration files
+config.yml
