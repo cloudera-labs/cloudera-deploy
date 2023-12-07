@@ -58,8 +58,8 @@ Configuration is passed via environment variables and an user-facing configurati
 
     | Variable | Description | Status |
     |----------|-------------|--------|
-    | `SSH_PUBLIC_KEY_FILE` | File path to the SSH public key that will be uploaded to the cloud provider (using the `name_prefix` variable as the key label). E.g. `/Users/wmudge/.ssh/demo_ops.pub` | Mandatory |
-    | `CDP_LICENSE_FILE` | File path to a CDP Private Cloud Base license. E.g. `/Users/wmudge/Documents/webster_mudge_2022_2023_cloudera_license.txt` | Mandatory |
+    | `SSH_PUBLIC_KEY_FILE` | File path to the SSH public key that will be uploaded to the cloud provider (using the `name_prefix` variable as the key label). E.g. `/Users/example/.ssh/demo_ops.pub` | Mandatory |
+    | `CDP_LICENSE_FILE` | File path to a CDP Private Cloud Base license. E.g. `/Users/example/Documents/example_cloudera_license.txt` | Mandatory |
     | `IPA_USER` | Set this to `admin`. The adminstrator user for FreeIPA.  | Mandatory |
     | `IPA_PASSWORD` | The adminstrator and directory password for FreeIPA | Mandatory |
     | `AWS_PROFILE` | The profile label for your AWS credentials. Otherwise, use the associated `AWS_*` parameters. Used also for remote storage of Terraform state in AWS. | Mandatory |
@@ -127,21 +127,21 @@ Run the following:
 ```bash
 # Run the 'external' system configuration
 ansible-navigator run external_setup.yml \
-    -e @lab_configs/config.yml \
+    -e @config.yml \
     -i inventory_static_<name_prefix>_aws.ini
 ```
 
 ```bash
 # Run the 'internal' Cloudera installations and configurations
 ansible-navigator run internal_setup.yml \
-    -e @lab_configs/config.yml \
+    -e @config.yml \
     -i inventory_static_<name_prefix>_aws.ini
 ```
 
 ```bash
 # Run the Cloudera cluster configuration and imports
 ansible-navigator run base_setup.yml \
-    -e @lab_configs/config.yml \
+    -e @config.yml \
     -i inventory_static_<name_prefix>_aws.ini
 ```
 
@@ -149,7 +149,7 @@ And lastly, the _postfix_:
 
 ```bash
 ansible-navigator run base_postfix.yml \
-    -e @lab_configs/config.yml \
+    -e @config.yml \
     -i inventory_static_<name_prefix>_aws.ini
 ```
 
@@ -175,7 +175,7 @@ Run the following:
 
 ```bash
 ansible-navigator run pre_teardown.yml \
-    -e @lab_configs/config.yml \
+    -e @config.yml \
     -e @definition.yml \
     -i inventory_static_<name_prefix>_aws.ini
 ```
@@ -186,7 +186,7 @@ You can also run `terraform destroy` within the `tf_deployment_*` directory.
 
 ### Confirm SSH Connectivity
 
-Run the following from _the root of the definition project, i.e. `demo-definitions`_:
+Run the following:
 
 ```bash
 ansible -m ansible.builtin.ping -i inventory_static_<name_prefix>_aws.ini all

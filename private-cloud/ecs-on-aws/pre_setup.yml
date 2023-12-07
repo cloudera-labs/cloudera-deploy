@@ -90,7 +90,8 @@
   tasks:
     - name: Set up the FreeIPA server
       ansible.builtin.import_role:
-        name: cloudera.exe.freeipa_server
+        # name: cloudera.exe.freeipa_server
+        name: cloudera.infra.freeipa_server
       vars:
         ipaserver_hostname: "{{ inventory_hostname }}"
         ipaserver_realm: "{{ freeipa.realm }}"
@@ -213,7 +214,8 @@
     - name: Register host with FreeIPA services
       when: krb5_kdc_type == "Red Hat IPA"
       ansible.builtin.import_role:
-        name: cloudera.exe.freeipa_client
+        # name: cloudera.exe.freeipa_client
+        name: cloudera.infra.freeipa_client
       vars:
         ipaserver_domain: "{{ [name_prefix, domain] | join('.') }}"
         ipaserver_realm: "{{ freeipa.realm }}"
