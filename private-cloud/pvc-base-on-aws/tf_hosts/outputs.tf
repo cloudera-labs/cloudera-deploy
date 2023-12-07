@@ -13,6 +13,6 @@
 # limitations under the License.
 
 output "hosts" {
-  value = aws_instance.pvc_base
+  value       = aws_instance.pvc_base
   description = "Hosts"
 }
