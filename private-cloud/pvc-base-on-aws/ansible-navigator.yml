@@ -18,8 +18,8 @@ ansible-navigator:
     environment-variables:
       pass:
         - AWS_PROFILE
-        - CDP_PROFILE
         - SSH_PUBLIC_KEY_FILE
+        - SSH_PRIVATE_KEY_FILE
         - CDP_LICENSE_FILE
         - IPA_USER
         - IPA_PASSWORD        
@@ -37,6 +37,8 @@ ansible-navigator:
     volume-mounts:
       - src: "${SSH_PUBLIC_KEY_FILE}"
         dest: "${SSH_PUBLIC_KEY_FILE}"
+      - src: "${SSH_PRIVATE_KEY_FILE}"
+        dest: "${SSH_PRIVATE_KEY_FILE}"
       - src: "${CDP_LICENSE_FILE}"
         dest: "${CDP_LICENSE_FILE}"
       - src: "~/.aws"
