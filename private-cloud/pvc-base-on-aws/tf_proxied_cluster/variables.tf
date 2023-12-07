@@ -12,25 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# variable "security_group_intra_ingress" {
-#   type       = list(object({
-#     cidr       = list(string)
-#     from_port  = string
-#     to_port    = string
-#     protocol   = string
-#   }))
-
-#   description = "Ingress rule details for intra-cluster Security Group"
-#   default    = []
-# }
-
 # ------- General and Provider Resources -------
-
-variable "asset_tags" {
-  type        = map(any)
-  default     = {}
-  description = "Map of tags applied to all cloud-provider assets"
-}
 
 variable "ssh_public_key_file" {
   type        = string
@@ -52,6 +34,12 @@ variable "region" {
   description = "AWS region"
 }
 
+variable "asset_tags" {
+  type        = map(string)
+  default     = {}
+  description = "Map of tags applied to all cloud-provider assets"
+}
+
 # ------- Network Resources -------
 
 variable "vpc_name" {
@@ -71,4 +59,10 @@ variable "igw_name" {
   type        = string
   description = "Internet Gateway name"
   default     = ""
+}
+
+variable "domain" {
+  type = string
+  description = "Private subdomain for proxied hosts, e.g. pvc-base.cldr.example"
+  default = ""
 }
