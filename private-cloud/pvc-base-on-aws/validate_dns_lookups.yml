@@ -1,0 +1,27 @@
+- name: Check that all hosts in inventory are reachable
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Ping each host from controller
+      ping:
+
+
+- name: Check Forward and Reverse DNS lookups
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+
+    - name: Print the list of hosts
+      debug:
+        var: groups['all']
+
+    - name: Forward lookup
+      ansible.builtin.debug:
+        msg: 
+          - "Forward lookup DNS for {{ item }} is {{ lookup('community.general.dig', item , qtype='A') }}"
+      loop: "{{ groups['all'] }}"
+
+    # TODO Register forward lookup IP and do reverse lookup
+
+
