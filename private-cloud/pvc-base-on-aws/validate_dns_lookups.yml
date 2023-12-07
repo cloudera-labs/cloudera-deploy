@@ -1,3 +1,19 @@
+# Copyright 2023 Cloudera, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
 - name: Check that all hosts in inventory are reachable
   hosts: all
   gather_facts: no
@@ -5,23 +21,19 @@
     - name: Ping each host from controller
       ping:
 
-
 - name: Check Forward and Reverse DNS lookups
   hosts: localhost
   connection: local
   gather_facts: no
   tasks:
-
-    - name: Print the list of hosts
+    - name: Print the hosts
       debug:
         var: groups['all']
 
-    - name: Forward lookup
+    - name: Forward lookup for all hosts
       ansible.builtin.debug:
         msg: 
           - "Forward lookup DNS for {{ item }} is {{ lookup('community.general.dig', item , qtype='A') }}"
       loop: "{{ groups['all'] }}"
 
     # TODO Register forward lookup IP and do reverse lookup
-
-
