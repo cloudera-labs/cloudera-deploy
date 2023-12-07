@@ -105,20 +105,15 @@ variable "private_route_table_name" {
   default     = ""
 }
 
-# # Security Groups
-# variable "security_group_default_name" {
-#   type        = string
+# Security Groups
+variable "security_group_intra_name" {
+  type        = string
   
-#   description = "Default Security Group for CDP environment"
-# }
+  description = "Security Group for intra-cluster communication"
+  default = ""
+}
 
-# variable "security_group_knox_name" {
-#   type        = string
-  
-#   description = "Knox Security Group for CDP environment"
-# }
-
-# variable "security_group_rules_ingress" {
+# variable "security_group_intra_ingress" {
 #   type       = list(object({
 #     cidr       = list(string)
 #     from_port  = string
@@ -126,7 +121,7 @@ variable "private_route_table_name" {
 #     protocol   = string
 #   }))
   
-#   description = "Ingress rule details for Security Group"
+#   description = "Ingress rule details for intra-cluster Security Group"
 #   default    = []
 # }
 

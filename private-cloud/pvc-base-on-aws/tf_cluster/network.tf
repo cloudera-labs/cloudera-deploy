@@ -38,9 +38,12 @@ locals {
     az = data.aws_availability_zones.pvc_base.names[0],
     tags = {}
   }])
+  sg_intra_name = var.security_group_intra_name != "" ? var.security_group_intra_name : "${var.prefix}-pvc-base-intra"
 }
 
 # ------- AWS VPC -------
+
+# Virtual Cluster
 resource "aws_vpc" "pvc_base" {
   cidr_block           = var.vpc_cidr
   tags                 = { Name = local.vpc_name }
@@ -93,6 +96,7 @@ resource "aws_route_table_association" "pvc_base_public" {
 }
 
 # ------- AWS Private Networking infrastructure -------
+
 # Network Gateways (NAT)
 resource "aws_eip" "pvc_base" {
   count = length(aws_subnet.pvc_base_public)
@@ -142,81 +146,44 @@ resource "aws_route_table_association" "pvc_base_private" {
   route_table_id = aws_route_table.pvc_base_private[each.key].id
 }
 
-# # ------- Security Groups -------
-# # Default SG
-# resource "aws_security_group" "cdp_default_sg" {
-#   vpc_id      = aws_vpc.pvc_base.id
-#   name        = var.security_group_default_name
-#   description = var.security_group_default_name
+# ------- Security Groups -------
 
-#   tags = merge(var.env_tags, { Name = var.security_group_default_name })
+# Intra-cluster traffic
+resource "aws_security_group" "pvc_base" {
+  vpc_id      = aws_vpc.pvc_base.id
+  name        = local.sg_intra_name
+  description = "Intra-cluster communication for PVC cluster '${var.prefix}'"
 
-#   # Create self reference ingress rule to allow 
-#   # communication among resources in the security group.
-#   ingress {
-#     from_port = 0
-#     to_port   = 0
-#     protocol  = "all"
-#     self      = true
-#   }
+  tags = { Name = local.sg_intra_name }
 
-#   # Dynamic Block to create security group rule from var.sg_ingress
-#   dynamic "ingress" {
-#     for_each = var.security_group_rules_ingress
+  # Create self reference ingress rule to allow 
+  # communication among resources in the security group.
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "all"
+    self      = true
+  }
 
-#     content {
-#       cidr_blocks = ingress.value.cidr
-#       from_port   = ingress.value.from_port
-#       to_port     = ingress.value.to_port
-#       protocol    = ingress.value.protocol
-#     }
+  # TODO Ingress should be defined by tf_proxied_cluster or other root module
+  # # Dynamic Block to create security group rule from var.sg_ingress
+  # dynamic "ingress" {
+  #   for_each = var.security_group_rules_ingress
 
-#   }
+  #   content {
+  #     cidr_blocks = ingress.value.cidr
+  #     from_port   = ingress.value.from_port
+  #     to_port     = ingress.value.to_port
+  #     protocol    = ingress.value.protocol
+  #   }
 
-#   # Terraform removes the default ALLOW ALL egress. Let's recreate this
-#   egress {
-#     cidr_blocks = ["0.0.0.0/0"]
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "all"
-#   }
-# }
+  # }
 
-# # Knox SG
-# resource "aws_security_group" "cdp_knox_sg" {
-#   vpc_id      = aws_vpc.pvc_base.id
-#   name        = var.security_group_knox_name
-#   description = var.security_group_knox_name
-
-#   tags = merge(var.env_tags, { Name = var.security_group_knox_name })
-
-#   # Create self reference ingress rule to allow 
-#   # communication among resources in the security group.
-#   ingress {
-#     from_port = 0
-#     to_port   = 0
-#     protocol  = "all"
-#     self      = true
-#   }
-
-#   # Dynamic Block to create security group rule from var.sg_ingress
-#   dynamic "ingress" {
-#     for_each = var.security_group_rules_ingress
-
-#     content {
-#       cidr_blocks = ingress.value.cidr
-#       from_port   = ingress.value.from_port
-#       to_port     = ingress.value.to_port
-#       protocol    = ingress.value.protocol
-#     }
-
-#   }
-
-#   # Terraform removes the default ALLOW ALL egress. Let's recreate this
-#   egress {
-#     cidr_blocks = ["0.0.0.0/0"]
-#     from_port   = 0
-#     to_port     = 0
-#     protocol    = "all"
-#   }
-# }
+  # Terraform removes the default ALLOW ALL egress. Let's recreate this
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "all"
+  }
+}
