@@ -13,4 +13,11 @@
           - tree 
           - jq 
           - zip
+          - python38
+        state: present
+
+    - name: Install required packages
+      ansible.builtin.pip:
+        name: psycopg2-binary==2.9.5
+        executable: pip3.8
         state: present

@@ -21,7 +21,7 @@
     - name: Provision the infrastructure resources in the cloud provider
       when: infra_type != 'static'
       ansible.builtin.import_role:
-        name: cloudera.infra.provision
+        name: cloudera.exe.provision
       vars:
         provision_provider: "{{ infra_type }}"
         provision_inventory_file: "inventory_static_{{ name_prefix }}_{{ infra_type }}.ini"
@@ -66,7 +66,7 @@
     - name: Prepare storage volumes
       when: infra_type != "static" and storage_volumes | length > 0
       ansible.builtin.import_role:
-        name: cloudera.infra.mount
+        name: cloudera.exe.mount
       vars:
         mount_volumes: "{{ storage_volumes }}"
         mount_provider: "{{ infra_type }}"
@@ -90,8 +90,7 @@
   tasks:
     - name: Set up the FreeIPA server
       ansible.builtin.import_role:
-        # name: cloudera.exe.freeipa_server
-        name: cloudera.infra.freeipa_server
+        name: cloudera.exe.freeipa_server
       vars:
         ipaserver_hostname: "{{ inventory_hostname }}"
         ipaserver_realm: "{{ freeipa.realm }}"
@@ -214,8 +213,7 @@
     - name: Register host with FreeIPA services
       when: krb5_kdc_type == "Red Hat IPA"
       ansible.builtin.import_role:
-        # name: cloudera.exe.freeipa_client
-        name: cloudera.infra.freeipa_client
+        name: cloudera.exe.freeipa_client
       vars:
         ipaserver_domain: "{{ [name_prefix, domain] | join('.') }}"
         ipaserver_realm: "{{ freeipa.realm }}"

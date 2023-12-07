@@ -11,7 +11,7 @@
     - name: Deprovision the infrastructure resources in the cloud provider
       when: groups['all'] | length > 0
       ansible.builtin.import_role:
-        name: cloudera.infra.provision
+        name: cloudera.exe.provision
       vars:
         provision_state: absent
         provision_provider: "{{ infra_type }}"

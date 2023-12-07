@@ -28,7 +28,6 @@ clusters:
           longhorn_replication: 2
           lsoDataPath: "/ecs/local"
           defaultDataPath: "/ecs/longhorn-storage"
-          nfs_provisioned: 800
           nfs_over_provisioning: 800
           # TODO: Create cert and key for ECS ingress controller
           # ssl_certificate: /opt/cloudera/security/pki/ecs.pem
@@ -143,6 +142,11 @@ clusters:
         STORAGE_CONTAINER_MANAGER:
           scm_max_heap_size: 2048      
         OZONE_DATANODE:
+          ozone-conf/ozone-site.xml_role_safety_valve: |
+             <property>
+               <name>hdds.datanode.client.port</name>
+               <value>9874</value>
+             </property>
           ozone_datanode_heap_size: 2048
         OZONE_PROMETHEUS:
           ozone.prometheus.http-port: 19090

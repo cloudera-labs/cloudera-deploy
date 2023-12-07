@@ -6,9 +6,9 @@ encryption_activated: True
 # autotls: False
 
 repositories:
-  # 7.1.8 CHF4
-  - https://archive.cloudera.com/p/cdh7/7.1.8.15/parcels/
-cloudera_manager_version: 7.10.1
+  # Offical CDH 7.1.9.0
+  - https://archive.cloudera.com/p/cdh7/7.1.9.0/parcels/
+cloudera_manager_version: 7.11.3
 
 jdk_version: 11
 
@@ -40,6 +40,8 @@ dns_provider: "freeipa"
 
 # Connect FreeIPA to Knox and Ranger
 freeipa_activated: yes
+# FreeIPA client install on cluster nodes is done during pre-setup
+freeipa_enroll: no 
 
 # FreeIPA realm settings
 freeipa:
@@ -64,12 +66,6 @@ cloudera_manager_options:
   CUSTOM_BANNER_HTML: "1.5.1 - PvC ECS Lab ({{ name_prefix }})"
   SESSION_TIMEOUT: 43200
   PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND: 194560
-  # NOTE: Disabled in ChuckL's latest definition
-  # PHONE_HOME: false
-  # PROXYUSER_KNOX_GROUPS: "*"
-  # PROXYUSER_KNOX_HOSTS: "*"
-  # PROXYUSER_KNOX_PRINCIPAL: "knox"
-  # PROXYUSER_KNOX_USERS: "*"
   KRB_AUTH_ENABLE: "true"
 
 # License options (this is due to a hardcoded tmp directory on the target/manager node)
@@ -81,8 +77,9 @@ license_local_tmp_path: /tmp/cloudera_license.txt
 database_type: postgresql
 database_version: 12
 database_tls: true
+database_default_password: "{{ common_password }}"
 
-#########++++
+###############
 
 ## Red Hat FreeIPA
 krb5_kdc_type: Red Hat IPA
