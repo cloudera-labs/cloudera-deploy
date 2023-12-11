@@ -42,7 +42,7 @@ clusters:
           atlas_authentication_method_ldap_groupSearchBase: "{{ auth_provider.ldap_search_base.group }}"
           atlas_authentication_method_ldap_groupSearchFilter: "{{ auth_provider.ldap_search_filter.member }}"
           atlas_authentication_method_ldap_groupRoleAttribute: "{{ auth_provider.ldap_attr_group_name }}"
-          atlas_authentication_method_ldap_type: "ldap"
+          atlas_authentication_method_ldap_type: "{{ auth_provider.type | lower }}"
           atlas_authentication_method_ldap_default_role: "ROLE_ADMIN"
       HBASE:
         SERVICEWIDE:
@@ -126,14 +126,14 @@ clusters:
           rangerusersync_user_password: "{{ common_password }}"
         RANGER_ADMIN:
           ranger_admin_max_heap_size: 1024
-          ranger_authentication_method: "LDAP"
+          ranger_authentication_method: "{{ auth_provider.type | upper }}"
           ranger.ldap.url: "{{ auth_provider.ldap_url }}"
           ranger.ldap.bind.dn: "{{ auth_provider.ldap_bind_user_dn }}"
           ranger_ldap_bind_password: "{{ auth_provider.ldap_bind_password }}"
           ranger.ldap.user.dnpattern: "uid={0},{{ auth_provider.ldap_search_base.user }}"
           ranger.ldap.base.dn: "{{ auth_provider.ldap_base_dn }}"
-          ranger.ldap.user.searchfilter: "(&(sAMAccountName={0})(objectClass=person))"
-          ranger.ldap.group.searchfilter: "(&(member={0})(objectClass=group))"
+          ranger.ldap.user.searchfilter: "{{ auth_provider.ldap_search_filter.user }}"
+          ranger.ldap.group.searchfilter: "{{ auth_provider.ldap_search_filter.member }}"
           ranger.ldap.group.searchbase: "{{ auth_provider.ldap_search_base.group }}"
           ranger.ldap.group.roleattribute: "{{ auth_provider.ldap_attr_group_name }}"
           ranger.ldap.referral: "follow"
@@ -148,15 +148,15 @@ clusters:
           ranger.usersync.ldap.username.caseconversion: lower
           ranger.usersync.ldap.groupname.caseconversion: lower
           ranger.usersync.ldap.grouphierarchylevels: 0
-          ranger.usersync.group.based.role.assignment.rules: '&ROLE_SYS_ADMIN:g:field-se'
+          # ranger.usersync.group.based.role.assignment.rules: '&ROLE_SYS_ADMIN:g:field-se'
           ranger.usersync.group.memberattributename: "{{ auth_provider.ldap_attr_group_membership }}"
           ranger.usersync.group.nameattribute: "{{ auth_provider.ldap_attr_group_name }}"
-          ranger.usersync.group.objectclass: group
+          ranger.usersync.group.objectclass: "{{ auth_provider.ldap_object_class.group }}" # group
           ranger.usersync.group.searchbase: "{{ auth_provider.ldap_search_base.group }}"
 #          ranger.usersync.group.searchfilter: ""
 #          ranger.usersync.ldap.user.searchfilter: ""
           ranger.usersync.ldap.user.nameattribute: "{{ auth_provider.ldap_attr_user_name }}"
-          ranger.usersync.ldap.user.objectclass: person
+          ranger.usersync.ldap.user.objectclass: "{{ auth_provider.ldap_object_class.user }}" # person
           ranger.usersync.ldap.user.searchbase: "{{ auth_provider.ldap_search_base.user }}"
           ranger.usersync.source.impl.class: org.apache.ranger.ldapusersync.process.LdapUserGroupBuilder
           ranger.usersync.user.searchenabled: 'true'

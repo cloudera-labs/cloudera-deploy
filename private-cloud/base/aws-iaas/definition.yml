@@ -103,6 +103,7 @@ cloudera_manager_external_auth:
   external_first: no
   external_only: no
 
+# Set in cloudera_manager.external_auth.tasks.main:26
 auth_provider: "{{ auth_providers[cloudera_manager_external_auth.provider] }}"
 
 base_dn: "dc={{ freeipa.realm.split('.') | map('lower') | join(',dc=') }}"
@@ -111,7 +112,7 @@ group_dn: "cn=groups,cn=accounts,{{ base_dn }}"
 
 auth_providers:
   freeipa:
-    ldap_url: "ldaps://{{ groups['freeipa'] | first | default('') }}:636"
+    ldap_url: "ldaps://{{ groups['freeipa'] | first | default('') }}"
     ldap_base_dn: "{{ base_dn }}"
     ldap_bind_user_dn: "uid=admin,{{ user_dn }}"
     ldap_bind_password: "{{ freeipa.ipaadmin_password }}"
@@ -121,11 +122,11 @@ auth_providers:
     ldap_object_class:
       user: "person"
       group: "posixgroup"
-    ldap_search_filter:
-      user: uid
-      member: member
+    ldap_search_filter: # Used for mapping Services (Atlas, Ranger, etc.) to LDAP
+      user: "(&(sAMAccountName={0})(objectClass=person))"
+      member: "(&(member={0})(objectClass=group))"
       # group: (&(member={0})(objectclass=posixgroup)(!(cn=admins)))
-    ldap_attribute:
+    ldap_attribute: # Used for mapping CM to LDAP
      user: uid # Set to (uid={0})
      member: member # defaults to (member={0})
     ldap_attr_user_name: "uid"

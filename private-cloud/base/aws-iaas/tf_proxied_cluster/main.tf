@@ -263,14 +263,6 @@ resource "ansible_group" "deployment" {
   }
 }
 
-# resource "ansible_group" "nodes" {
-#   name = "nodes"
-#   children = [
-#     ansible_group.deployment.name,
-#     ansible_group.bastion.name
-#   ]
-# }
-
 resource "ansible_host" "masters" {
   for_each = { for idx, host in module.masters.hosts : idx => host }
 
