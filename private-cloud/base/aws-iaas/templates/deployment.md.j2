@@ -1,5 +1,7 @@
 # {{ name_prefix}} - PVC Base Deployment
 
+> A CDP Private Cloud Base cluster running on AWS IaaS.
+
 * **Prefix:** {{ name_prefix }}
 * **Domain:** {{ domain }}
 * **Realm:** {{ realm }}
@@ -34,8 +36,8 @@ for your browser and/or system.
 
 ## Hosts
 
-|Host|FQDN|
-|---|---|
+|Host|FQDN|Groups|
+|---|---|---|
 {% for host in groups['all'] | sort | map('extract', hostvars) | list %}
-| {{ host['inventory_hostname_short'] }} | {{ host['inventory_hostname'] }} |
+| {{ host['inventory_hostname_short'] }} | {{ host['inventory_hostname'] }} | {{ host['group_names'] | join(', ') }}
 {% endfor %}

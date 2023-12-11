@@ -17,10 +17,15 @@
   connection: local
   gather_facts: no
   tasks:
-    - name: Create the deployment summary document
+    - name: Create the deployment summary Markdown document
       ansible.builtin.template:
         src: "deployment.md.j2"
         dest: "{{ name_prefix | upper }}-DEPLOYMENT.md"
+    
+    - name: Create the deployment summary HTML document
+      ansible.builtin.template:
+        src: "deployment.html.j2"
+        dest: "{{ name_prefix | upper }}-DEPLOYMENT.html"
 
 - name: Retrieve the FreeIPA CA certificate
   hosts: freeipa

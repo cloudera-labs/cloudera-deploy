@@ -1,0 +1,150 @@
+<!--
+ Copyright 2023 Cloudera, Inc.
+ 
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+     http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+  <style>
+    /* Cloudera Light scheme (Default) */
+    [data-theme="light"],
+    :root:not([data-theme="dark"]) {
+      --primary: #fb8c00;
+      --primary-hover: #f57c00;
+      --primary-focus: rgba(251, 140, 0, 0.125);
+      --primary-inverse: #FFF;
+    }
+
+    /* Cloudera Dark scheme (Auto) */
+    /* Automatically enabled if user has Dark mode enabled */
+    @media only screen and (prefers-color-scheme: dark) {
+      :root:not([data-theme]) {
+        --primary: #fb8c00;
+        --primary-hover: #ff9800;
+        --primary-focus: rgba(251, 140, 0, 0.25);
+        --primary-inverse: #FFF;
+      }
+    }
+
+    /* Cloudera Dark scheme (Forced) */
+    /* Enabled if forced with data-theme="dark" */
+    [data-theme="dark"] {
+      --primary: #fb8c00;
+      --primary-hover: #ff9800;
+      --primary-focus: rgba(251, 140, 0, 0.25);
+      --primary-inverse: #FFF;
+    }
+
+    /* Cloudera (Common styles) */
+    :root {
+      --form-element-active-border-color: var(--primary);
+      --form-element-focus-color: var(--primary-focus);
+      --switch-color: var(--primary-inverse);
+      --switch-checked-background-color: var(--primary);
+    }
+
+    pre {
+      font-family: monospace;
+      background-color: transparent;
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: var(--primary);
+    }
+  </style>
+  <title>{{ name_prefix}} - PVC Base Deployment</title>
+</head>
+
+<body>
+  <main class="container">
+    <hgroup>
+      <h1>{{ name_prefix}} - PVC Base Deployment</h1>
+      <h2>A CDP Private Cloud Base cluster running on AWS IaaS.</h2>
+    </hgroup>
+    <table>
+      <tbody>
+        <tr>
+          <th>Prefix</th>
+          <td>{{ name_prefix }}</td>
+        </tr>
+        <tr>
+          <th>Domain</th>
+          <td>{{ domain }}</td>
+        </tr>
+        <tr>
+          <th>Realm</thd>
+          <td>{{ realm }}</td>
+        </tr>
+        <tr>
+          <th>SSH</thd>
+          <td>{{ lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE') | basename }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Deployment Access</h2>
+    <p>Enable the SSH tunnel to the deployment:</p>
+    <pre>
+  ssh -D 8157 -qCN {{ groups['jump_host'] | map('extract', hostvars, 'ansible_user') | first }}@{{ groups['jump_host'] | map('extract', hostvars, 'ansible_host') | first }}
+      </pre>
+    <p>Use a SOCKS5 proxy switcher in your browser to access the deployment endpoints. (An example is the
+      <i>SwitchyOmega</i> extension for Chrome-based browsers.)</p>
+    <p>In the proxy configuration, set <i>Protocol</i> to <b>SOCKS5</b>, <i>Server</i> to <b>localhost</b>, and
+      <i>Port</i> to <b>8157</b>. Ensure the SOCKS5 proxy is active when clicking on the CDP Private Cloud Base UIs and
+      endpoints that you wish to access.</p>
+    <h2>SSL Certificate Installation</h2>
+    <p>Any SSL-enabled endpoint within the cluster will produce a SSL warning for the self-signed certificate issued by
+      the deployment's local FreeIPA server. If you wish to avoid this warning, install the CA certificate, <b>{{
+        groups['freeipa'] | first }}.ca.crt</b>, for your browser and/or system.</p>
+    <h2>Endpoints</h2>
+    <table>
+      <tbody>
+        <tr>
+          <td scope="col">Cloudera Manager</td>
+          <td><a target="_blank" href="https://{{ groups['cloudera_manager'] | first }}:7183">https://{{
+              groups['cloudera_manager'] | first }}:7183</a></td>
+        </tr>
+        <tr>
+          <td scope="col">FreeIPA</td>
+          <td><a target="_blank" href="https://{{ groups['freeipa'] | first }}">https://{{ groups['freeipa'] | first
+              }}</a></td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Hosts</h2>
+    <table role="grid">
+      <thead>
+        <tr>
+          <th scope="col">Host</th>
+          <th scope="col">FQDN</th>
+          <th scope="col">Groups</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for host in groups['all'] | sort | map('extract', hostvars) | list %}
+        <tr>
+          <td scope="col">{{ host['inventory_hostname_short'] }}</td>
+          <td>{{ host['inventory_hostname'] }}</td>
+          <td>{{ host['group_names'] | join(', ') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </main>
+</body>
+
+</html>

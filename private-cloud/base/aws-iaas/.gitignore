@@ -40,5 +40,6 @@ inventory_static*
 config.yml
 
 # Per-deployment artifacts
+*-DEPLOYMENT.html
 *-DEPLOYMENT.md
 *.ca.crt
