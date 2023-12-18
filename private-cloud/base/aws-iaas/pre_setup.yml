@@ -93,6 +93,7 @@
         ipaserver_forward_policy: only
         ipaserver_recursion_acl_cidr: "{{ vpc_cidr }}"
         ipaserver_copy_csr_to_controller: yes
+        ipaserver_ca_subject: "CN=CLDR-{{ prefix_name }}-RootCA,O={{ freeipa.realm }}"
         ipaclient_mkhomedir: yes
         # TODO Add test for these parameters - error in role is opaque
         ipadm_password: "{{ freeipa.ipaadmin_password | default(lookup('env', 'IPA_PASSWORD', default='Undefined')) }}"
