@@ -123,7 +123,7 @@ auth_providers:
       user: "person"
       group: "posixgroup"
     ldap_search_filter: # Used for mapping Services (Atlas, Ranger, etc.) to LDAP
-      user: "(&(sAMAccountName={0})(objectClass=person))"
+      user: "(&(uid={0})(objectClass=person))"
       member: "(&(member={0})(objectClass=group))"
       # group: (&(member={0})(objectclass=posixgroup)(!(cn=admins)))
     ldap_attribute: # Used for mapping CM to LDAP
