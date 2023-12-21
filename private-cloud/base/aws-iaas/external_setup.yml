@@ -1,0 +1,62 @@
+# Copyright 2023 Cloudera, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+- name: Set up CDP Private Cloud external prerequisites
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  vars:
+    definition_path: "./"
+  tasks:
+    - name: Set of deployment variables from definition.yml
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+      when: init__completed is undefined
+
+    - name: Prepare inventory for PvC Plays
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+        tasks_from: prep_pvc.yml
+  tags:
+    - always
+
+- name: Init run tasks for all nodes
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Group hosts by host template and TLS
+      ansible.builtin.include_role:
+        name: cloudera.cluster.deployment.groupby
+
+    - name: Check connectivity to Inventory
+      ansible.builtin.wait_for_connection:
+  tags:
+    - always
+
+- name: Set up external prerequisites for CDP Private Cloud
+  ansible.builtin.import_playbook: cloudera.exe.pvc_base_prereqs_ext.yml
+
+# NOTE: Cluster hosts become unavilable after krb5 client setup
+# This is a temporary workaround while we debug the source of the issue
+- name: Reboot all cluster hosts
+  hosts: cluster
+  gather_facts: no
+  become: yes
+  tasks:
+    - name: Reboot all cluster hosts
+      ansible.builtin.reboot:

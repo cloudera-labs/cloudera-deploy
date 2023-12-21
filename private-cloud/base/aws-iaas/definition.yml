@@ -1,0 +1,155 @@
+# Copyright 2023 Cloudera, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+### Infrastructure
+
+infra_type: aws
+
+# Terraform
+terraform:
+  state:
+    storage: local
+    create_remote_storage: False
+    s3_region: "{{ infra_region }}"
+    s3_bucket: "{{ name_prefix }}-tf-state"
+
+# SSH
+public_key_id: "{{ name_prefix }}-pvc-base"
+public_key_file: "{{ lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE') }}"
+public_key_text: "{{ lookup('ansible.builtin.file', lookup('ansible.builtin.env', 'SSH_PUBLIC_KEY_FILE')) }}"
+
+### Cluster
+
+kerberos_activated: True
+encryption_activated: True
+# tls_activated: True
+# autotls: False
+
+jdk_version: 11
+
+repositories:
+  - https://archive.cloudera.com/p/cdh7/7.1.9.0/parcels/  # Offical CDH 7.1.9.0
+
+# Connect FreeIPA to Knox and Ranger
+freeipa_activated: yes
+
+# FreeIPA client install on cluster nodes is done during pre_setup, so suppress
+freeipa_enroll: no 
+
+# FreeIPA realm settings
+freeipa:
+  realm: "{{ realm }}"
+  ipaadmin_user: admin
+  ipaadmin_password: "{{ common_password }}"
+
+# Defer user and group creation to SSSD/FreeIPA registration
+# Use when you dont need ansible to run "ca_server"
+skip_user_group_init: no
+
+### Cloudera Manager
+
+cloudera_manager_version: 7.11.3
+
+# General options
+cloudera_manager_options:
+  CUSTOM_BANNER_HTML: "PVC Base Lab ({{ name_prefix }})"
+  SESSION_TIMEOUT: 43200
+  PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND: 194560
+  KRB_AUTH_ENABLE: "true"
+
+# Cloudera license
+license_file: "{{ lookup('ansible.builtin.env', 'CDP_LICENSE_FILE') }}"
+
+# License options (this is due to a hardcoded tmp directory on the target/manager node)
+license_local_tmp_path: /tmp/cloudera_license.txt
+
+###  RDBMS
+
+database_type: postgresql
+database_version: 12
+database_tls: true
+database_default_password: "{{ common_password }}"
+
+### Red Hat FreeIPA
+
+krb5_kdc_type: Red Hat IPA
+krb5_realm: "{{ freeipa.realm }}"
+krb5_kdc_admin_user: "{{ freeipa.ipaadmin_user }}@{{ krb5_realm }}"
+krb5_kdc_admin_password: "{{ freeipa.ipaadmin_password }}"
+krb5_enc_types: "aes256-cts aes128-cts"
+# TODO: This needs to either be explicit or rendered from a host with DNS resolution
+# Cannot rely on localhost to have DNS access, e.g. private networking on EC2
+#krb5_kdc_host: "{{ lookup('community.general.dig', '_ldap._tcp.' + domain +'./SRV', 'flat=0', wantlist=True, fail_on_error=True) | map(attribute='target') | first }}"
+krb5_kdc_host: "{{ groups['freeipa'] | first | default('') }}"
+
+###  CM External Auth - FreeIPA as LDAP
+
+# Settings for FreeIPA sidecar deployment
+cloudera_manager_external_auth:
+  provider: freeipa
+  external_first: no
+  external_only: no
+
+# Set in cloudera_manager.external_auth.tasks.main:26
+auth_provider: "{{ auth_providers[cloudera_manager_external_auth.provider] }}"
+
+base_dn: "dc={{ freeipa.realm.split('.') | map('lower') | join(',dc=') }}"
+user_dn: "cn=users,cn=accounts,{{ base_dn }}"
+group_dn: "cn=groups,cn=accounts,{{ base_dn }}"
+
+auth_providers:
+  freeipa:
+    ldap_url: "ldaps://{{ groups['freeipa'] | first | default('') }}"
+    ldap_base_dn: "{{ base_dn }}"
+    ldap_bind_user_dn: "uid=admin,{{ user_dn }}"
+    ldap_bind_password: "{{ freeipa.ipaadmin_password }}"
+    ldap_search_base:
+      user: "{{ user_dn }}"
+      group: "{{ group_dn }}"
+    ldap_object_class:
+      user: "person"
+      group: "posixgroup"
+    ldap_search_filter: # Used for mapping Services (Atlas, Ranger, etc.) to LDAP
+      user: "(&(sAMAccountName={0})(objectClass=person))"
+      member: "(&(member={0})(objectClass=group))"
+      # group: (&(member={0})(objectclass=posixgroup)(!(cn=admins)))
+    ldap_attribute: # Used for mapping CM to LDAP
+     user: uid # Set to (uid={0})
+     member: member # defaults to (member={0})
+    ldap_attr_user_name: "uid"
+    ldap_attr_group_name: "cn"
+    ldap_attr_group_membership: "member"
+    type: LDAP
+
+## TLS signing
+skip_ipa_signing: no # This is the default
+remote_ipa_server: "{{ groups['freeipa'] | first | default('') }}"
+
+tls_key_password: "{{ common_password }}"
+tls_keystore_password: "{{ common_password }}"
+tls_truststore_password: "{{ common_password }}"
+
+ca_server_attrs_root:
+  CN: 'SE-Root CA'
+ca_server_attrs_intermediate:
+  CN: 'SE-Intermediate CA'
+
+# Vars from legacy cloudera-Deploy
+use_auto_repo_mirror: no
+use_default_cluster_definition: no
+use_download_mirror: no
+preload_cm_parcel_repo: yes
+teardown_everything: yes

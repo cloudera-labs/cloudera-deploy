@@ -1,0 +1,70 @@
+# Copyright 2023 Cloudera, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+ansible-navigator:
+  playbook-artifact:
+      save-as: "runs/{playbook_name}-{time_stamp}.json"
+
+  ansible-runner:
+    artifact-dir: runs
+    rotate-artifacts-count: 3
+
+  logging:
+    level: debug
+    append: False
+
+  ansible:
+    inventory:
+      entries:
+        - inventory.yml
+
+  execution-environment:
+    container-engine: docker
+    enabled: True
+    environment-variables:
+      pass:
+        - AWS_PROFILE
+        - SSH_PUBLIC_KEY_FILE
+        - SSH_PRIVATE_KEY_FILE
+        - CDP_LICENSE_FILE
+        #- IPA_USER
+        #- IPA_PASSWORD        
+      set:
+        ANSIBLE_SSH_CONTROL_PATH: "/dev/shm/cp%%h-%%p-%%r"
+        ANSIBLE_CALLBACK_WHITELIST: "ansible.posix.profile_tasks"
+        ANSIBLE_GATHERING: "smart"
+        ANSIBLE_DEPRECATION_WARNINGS: False
+        ANSIBLE_HOST_KEY_CHECKING: False
+        ANSIBLE_SSH_RETRIES: 10
+    image: ghcr.io/cloudera-labs/cldr-runner:aws-latest
+    pull:
+      arguments:
+        - "--tls-verify=false"
+    volume-mounts:
+      - src: "${SSH_PUBLIC_KEY_FILE}"
+        dest: "${SSH_PUBLIC_KEY_FILE}"
+      - src: "${SSH_PRIVATE_KEY_FILE}"
+        dest: "${SSH_PRIVATE_KEY_FILE}"
+      - src: "${CDP_LICENSE_FILE}"
+        dest: "${CDP_LICENSE_FILE}"
+      - src: "~/.aws"
+        dest: "/runner/.aws"
+        options: "Z"
+      - src: "~/.ssh"
+        dest: "/runner/.ssh"
+        options: "Z"
+    container-options:
+      - "--network=host"

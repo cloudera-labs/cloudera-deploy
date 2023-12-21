@@ -1,0 +1,25 @@
+# Copyright 2023 Cloudera, Inc.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+name_prefix:       "{{ mandatory }}"                # Unique identifier for the deployment                 
+infra_region:      "us-east-2"
+domain:            "{{ name_prefix }}.cldr.example" # The deployment subdomain (private) managed by the local FreeIPA server
+realm:             "CLDR.DEPLOYMENT"                # The Kerberos realm managed by the local FreeIPA server
+common_password:   "Example776"                     # For external services, e.g. FreeIPA, Postgres, TLS
+admin_password:    "Example776"                     # For Cloudera-related services, e.g. Cloudera Manager
+deployment_tags:
+  deployment:   "{{ name_prefix }}"
+  deploy-tool:  cloudera-deploy
