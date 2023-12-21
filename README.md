@@ -31,6 +31,7 @@ The catalog of projects, examples, and definitions currently covers CDP Public C
 | [`cde`](public-cloud/aws/cde/README.md) | public cloud | AWS | **Constructs a set of Cloudera Data Engineering (CDE) workspaces within their own CDP Public Cloud Environment and Datalake.** Generates via Ansible the AWS infrastructure and CDP artifacts, including SSH key, cross-account credentials, S3 buckets, etc. |
 | [`cdf`](public-cloud/aws/cdf/README.md) | public cloud | AWS | **Constructs a set of Cloudera Data Flow (CDF) workspaces and data hubs  within their own CDP Public Cloud Environment and Datalake.** Generates via Ansible the AWS infrastructure and CDP artifacts, including SSH key, cross-account credentials, S3 buckets, etc. |
 | [`cml`](public-cloud/aws/cml/README.md) | public cloud | AWS | **Constructs a set of Cloudera Machine Learning (CML) workspaces within their own CDP Public Cloud Environment and Datalake.** Generates via Ansible the AWS infrastructure and CDP artifacts, including SSH key, cross-account credentials, S3 buckets, etc. |
+| [`base`](private-cloud/base/aws-iaas/README.md) | private cloud | AWS IaaS | **Constructs a CDP Private Cloud Base cluster running on AWS IaaS.** Uses Terraform to generate the AWS infrastructure and deploys to a SSH-proxied private cluster. |
 
 # Roadmap
 
