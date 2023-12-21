@@ -108,6 +108,9 @@ To use the projects in `cloudera-deploy`, you need to first set up `ansible-navi
 > [!NOTE]
 > Further details can be found in the [NAVIGATOR document](https://github.com/cloudera-labs/cldr-runner/blob/main/NAVIGATOR.md) in `cloudera-labs/cldr-runner`.
 
+> [!WARNING]
+> On OSX, avoid using the stock Python executable with `ansible-navigator`; users report that the `curses` library in the stock installation is unable to run (throws a segfault). You might want to install another version of Python, such as using `brew`.
+
 Then, clone this project.
 
 ```bash
