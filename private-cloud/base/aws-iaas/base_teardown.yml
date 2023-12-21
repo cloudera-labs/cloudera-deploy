@@ -1,0 +1,85 @@
+---
+
+# Copyright 2023 Cloudera, Inc. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# STARTBLOCK # Init run
+- name: Init run tasks for Ansible Controller
+  hosts: localhost
+  gather_facts: yes
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+      when: init__completed is undefined
+
+    - name: Prepare inventory for PvC Plays
+      ansible.builtin.include_role:
+        name: cloudera.exe.init_deployment
+        public: yes
+        tasks_from: prep_pvc.yml
+  tags:
+    - always
+
+# ENDBLOCK # Init run
+
+
+# STARTBLOCK # Teardown
+# Teardown CA
+- name: Teardown CA server
+  hosts: "{{ target | default('ca_server') }}"
+  gather_facts: yes
+  become: yes
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera.cluster.infrastructure.ca_certs
+        tasks_from: clean.yml
+  tags:
+    - teardown_ca
+
+- name: Teardown security artifact directories
+  hosts: "{{ target | default('tls') }}"
+  gather_facts: yes
+  become: yes
+  roles:
+    - role: cloudera.cluster.security.tls_clean
+      when: "'tls' in groups"
+  tags:
+    - teardown_tls
+
+# Teardown Cluster
+- name: Teardown ECS
+  hosts: "{{ target | default('ecs_nodes') }}"
+  gather_facts: yes
+  become: yes
+  tasks:
+    - ansible.builtin.include_role:
+        name: cloudera.cluster.teardown
+        tasks_from: teardown_ecs.yml
+      vars:
+        cluster: "{{ definition.clusters | selectattr('type', 'defined') | selectattr('type', 'search', 'ecs') | first }}"
+  tags:
+    - teardown_ecs
+
+- name: Cluster Teardown Process
+  hosts: "{{ target | default('cloudera_manager, cluster') }}"
+  gather_facts: yes
+  become: yes
+  any_errors_fatal: true
+  roles:
+    - cloudera.cluster.teardown
+  tags:
+    - teardown_cluster
+
+# ENDBLOCK # Teardown
