@@ -22,14 +22,13 @@ infra_region:  "<ENTER_VALUE>"                       # str; e.g. (eastus)
 # GCP Project ID
 gcp_project_id:  "<ENTER_VALUE>"  # You must specify a GCP Project ID
 
+# Tags to apply to resources, examples shown below
+tags:
+  owner: "<ENTER_VALUE>"
+  enddate: "<ENTER_VALUE>"
+
 # CDP Environment Deployment type. Options are public, semi-private and private
 deployment_template: public  
-
-# Tags to apply to resources, examples shown below
-# tags:
-#   owner: "<ENTER_VALUE>"
-#   project: "<ENTER_VALUE>"
-#   enddate: "<ENTER_VALUE>"
 
 # Limit UI and SSH access to the caller/controller
 # Edit with list of CIDRs if access required from other endpoints

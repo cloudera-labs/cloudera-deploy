@@ -138,11 +138,10 @@
       when:
         - enable_cdw
         - dw is defined
-        # - __env_details.cloud_platform | lower == 'aws'
       cloudera.cloud.dw_cluster:
         env_crn: "{{ __env_details.crn }}"
-        aws_lb_subnets: "{{ __env_details.subnets }}"
-        aws_worker_subnets: "{{ __env_details.subnets }}"
+        aws_lb_subnets: "{{ __env_details.subnets[:3] }}" # CDW required at most 3 subnets
+        aws_worker_subnets: "{{ __env_details.subnets[:3] }}" # CDW required at most 3 subnets
         private_load_balancer: "{{ dw.private_loadbalancer | default(omit) }}"
         public_worker_node: "{{ dw.public_worker_node | default(omit) }}"
         overlay: "{{ dw.overlay | default(omit) }}"

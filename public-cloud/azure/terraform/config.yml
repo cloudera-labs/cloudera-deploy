@@ -19,14 +19,13 @@ name_prefix: "<ENTER_VALUE>"                         # str; keep short 4-7 chara
 # Azure region for the CDP Public Cloud
 infra_region:  "<ENTER_VALUE>"                       # str; e.g. (eastus)
 
+# Tags to apply to resources, examples shown below
+tags:
+  owner: "<ENTER_VALUE>"
+  enddate: "<ENTER_VALUE>"
+
 # CDP Environment Deployment type. Options are public, semi-private and private
 deployment_template: public  
-
-# Tags to apply to resources, examples shown below
-# tags:
-#   owner: "<ENTER_VALUE>"
-#   project: "<ENTER_VALUE>"
-#   enddate: "<ENTER_VALUE>"
 
 # Limit UI and SSH access to the caller/controller
 # Edit with list of CIDRs if access required from other endpoints
