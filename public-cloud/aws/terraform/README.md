@@ -36,7 +36,7 @@ export CDP_ACCESS_KEY_ID=your-cdp-access-key-id
 export CDP_PRIVATE_KEY=your-cdp-private-id
 ```
 
-Tweak the `config.yml` parameters to your liking. Notably, you should add and/or change:
+Tweak the `config.yml` parameters to your liking. Notably, you should add and/or change the below parameters. The Data Services configurations (e.g. GPU for CML) can be edited in the config.yml file.
 
 ```yaml
 name_prefix:    ex01      # Keep this short (4-7 characters)
@@ -65,6 +65,10 @@ Then set up the CDP Public Cloud by running the playbook:
 ```bash
 ansible-navigator run setup.yml -e @./config.yml
 ```
+
+> ⏱️ **Note:** The deployment can take up to **60 minutes**.
+
+> ⚠️ **Note:** Since Terraform is used to deploy the Cloudera environment and datalake, caution is advised when cancelling a deployment mid-execution, as it may lead to corruption of the Terraform state file.
 
 ### Terraform resource files
 

@@ -41,6 +41,7 @@ enable_cdf: False
 enable_cml: False
 enable_cdw: False
 enable_cde: False
+# NOTE: Data Services configurations (e.g. GPU for CML) can be edited below.
 
 # Data Flow Configurations
 df:
@@ -71,7 +72,17 @@ ml:
             enabled: yes
           rootVolume:
             size: 300
-
+        # Example GPU instance group shown below; Uncomment to use
+        # - name: gpu_settings
+        #   autoscaling:
+        #     maxInstances: 1
+        #     minInstances: 0
+        #   instanceCount: 0
+        #   instanceTier: "ON_DEMAND"
+        #   instanceType: "p2.8xlarge" # AWS
+        #   rootVolume:
+        #     size: 300
+        
 # Data Warehouse Service
 dw:
   private_loadbalancer: no
