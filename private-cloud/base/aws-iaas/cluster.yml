@@ -17,7 +17,7 @@
 clusters:
   - name: PVC-Base
     type: base
-    services: [ATLAS, HBASE, HDFS, HIVE, HIVE_ON_TEZ, INFRA_SOLR, KAFKA, OZONE, RANGER, SPARK_ON_YARN, TEZ, YARN, ZOOKEEPER]
+    services: [ATLAS, HBASE, HDFS, HIVE, HIVE_ON_TEZ, INFRA_SOLR, KAFKA, OZONE, RANGER, TEZ, YARN, ZOOKEEPER]
     security:
       kerberos: true
       tls: true
@@ -51,9 +51,9 @@ clusters:
         REGIONSERVER:
           hbase_regionserver_java_heapsize: 268435456
         MASTER:
-          hbase_master_java_heapsize: 134217728
+          hbase_master_java_heapsize: 1156579328
         GATEWAY:
-          hbase_client_java_heapsize: 134217728
+          hbase_client_java_heapsize: 268435456
       # NOTE: Have removed /mnt from the various HFDS directories
       HDFS:
         SERVICEWIDE:
@@ -62,7 +62,7 @@ clusters:
           hadoop_secure_web_ui: false
           trusted_realms: "{{ realm | upper }}, {{ realm | lower }}"
         DATANODE:
-          datanode_java_heapsize: 134217728
+          datanode_java_heapsize: 1073741824
           dfs_data_dir_list: /dfs/dn
           dfs_datanode_max_locked_memory: 0
           dfs_datanode_failed_volumes_tolerated: 0
@@ -70,10 +70,10 @@ clusters:
           hdfs_client_java_heapsize: 134217728
         NAMENODE:
           dfs_name_dir_list: /dfs/nn
-          namenode_java_heapsize: 134217728
+          namenode_java_heapsize: 3427794944
           role_config_suppression_namenode_java_heapsize_minimum_validator: true
         SECONDARYNAMENODE:
-          secondary_namenode_java_heapsize: 134217728
+          secondary_namenode_java_heapsize: 3427794944
           fs_checkpoint_dir_list: /dfs/snn
       HIVE:
         SERVICEWIDE:
@@ -171,21 +171,17 @@ clusters:
           enable_ranger_authorization: false
         SOLR_SERVER:
           solr_graceful_stop_timeout: 5
-      SPARK_ON_YARN:
-        SPARK_YARN_HISTORY_SERVER:
-          ssl_enabled: true
-          history_server_spnego_enabled: false
       YARN:
         SERVICEWIDE:
           hadoop_secure_web_ui: false
         JOBHISTORY:
-          mr2_jobhistory_java_heapsize: 134217728
+          mr2_jobhistory_java_heapsize: 1073741824
         NODEMANAGER:
-          node_manager_java_heapsize: 134217728
+          node_manager_java_heapsize: 1073741824
           yarn_nodemanager_resource_memory_mb: 2048
           yarn_nodemanager_resource_cpu_vcores: 2
         RESOURCEMANAGER:
-          resource_manager_java_heapsize: 134217728
+          resource_manager_java_heapsize: 1073741824
           yarn_scheduler_maximum_allocation_mb: 2048
           yarn_scheduler_maximum_allocation_vcores: 2
       ZOOKEEPER:
@@ -205,7 +201,6 @@ clusters:
         KAFKA: [KAFKA_BROKER]
         OZONE: [GATEWAY, OZONE_MANAGER, OZONE_RECON, STORAGE_CONTAINER_MANAGER, OZONE_DATANODE, S3_GATEWAY]
         RANGER: [RANGER_ADMIN, RANGER_TAGSYNC, RANGER_USERSYNC]
-        SPARK_ON_YARN: [SPARK_YARN_HISTORY_SERVER, GATEWAY]
         TEZ: [GATEWAY]
         YARN: [RESOURCEMANAGER, NODEMANAGER, JOBHISTORY, GATEWAY]
         ZOOKEEPER: [SERVER]
@@ -217,7 +212,6 @@ clusters:
         HIVE_ON_TEZ: [GATEWAY]
         OZONE: [OZONE_DATANODE, GATEWAY]
         TEZ: [GATEWAY]
-        SPARK_ON_YARN: [GATEWAY]
         YARN: [NODEMANAGER, GATEWAY]
         ZOOKEEPER: [SERVER]
 

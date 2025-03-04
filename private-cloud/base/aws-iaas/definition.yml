@@ -41,7 +41,7 @@ encryption_activated: True
 jdk_version: 11
 
 repositories:
-  - https://archive.cloudera.com/p/cdh7/7.1.9.0/parcels/  # Offical CDH 7.1.9.0
+  - https://archive.cloudera.com/p/cdh7/7.3.1.0/parcels/  # Offical CDH 7.3.1
 
 # Connect FreeIPA to Knox and Ranger
 freeipa_activated: yes
@@ -61,7 +61,7 @@ skip_user_group_init: no
 
 ### Cloudera Manager
 
-cloudera_manager_version: 7.11.3
+cloudera_manager_version: 7.13.1
 
 # General options
 cloudera_manager_options:
@@ -79,7 +79,7 @@ license_local_tmp_path: /tmp/cloudera_license.txt
 ###  RDBMS
 
 database_type: postgresql
-database_version: 12
+database_version: 13
 database_tls: true
 database_default_password: "{{ common_password }}"
 
